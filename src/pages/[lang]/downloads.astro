@@ -1,0 +1,122 @@
+---
+import {
+  ArrowLeft, ArrowUpRight, BadgeCheck, Building2, CheckCircle2, Clock3,
+  CloudDownload, ExternalLink, Fingerprint, Laptop, Link2, Monitor,
+  PackageCheck, RadioTower, RefreshCw, Server, ShieldCheck, Terminal, TriangleAlert
+} from "lucide-astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getDownloadConfig, getOrderedDownloadSources, type DownloadSource } from "../../lib/config";
+import { getLocaleStaticPaths, getUi, localeMeta, localizeDownloadSource, localizedPath, requireLocale } from "../../lib/i18n";
+
+export function getStaticPaths() { return getLocaleStaticPaths(); }
+
+const locale = requireLocale(Astro.params.lang);
+const copy = getUi(locale).downloads;
+const config = getDownloadConfig();
+const updatedAt = new Intl.DateTimeFormat(localeMeta[locale].dateLocale, { dateStyle: "medium", timeStyle: "short" }).format(new Date(config.updatedAt));
+const platforms = [
+  { id: "windows", label: "Windows", icon: Monitor },
+  { id: "macos", label: "macOS", icon: Laptop },
+  { id: "linux", label: "Linux", icon: Terminal }
+] as const;
+const typeIcons = { official: BadgeCheck, mirror: Server, community: RadioTower, enterprise: Building2, cloud: CloudDownload, custom: Link2 };
+const statusIcons = { verified: CheckCircle2, monitoring: RefreshCw, degraded: TriangleAlert, planned: Clock3, unverified: TriangleAlert };
+function isAllowedUrl(source: DownloadSource): boolean {
+  const parsed = new URL(source.url);
+  return parsed.protocol === "https:" || (config.allowHttp && parsed.protocol === "http:");
+}
+---
+
+<BaseLayout locale={locale} title={copy.title} description={copy.description}>
+  <section class="download-hero">
+    <div class="page-shell download-hero-grid">
+      <div>
+        <a class="back-link" href={localizedPath(locale)}><ArrowLeft size={15} />{copy.back}</a>
+        <span class="eyebrow">{copy.eyebrow}</span>
+        <h1>{copy.heading}</h1>
+        <p>{copy.summary}</p>
+        <div class="trust-row">
+          <span><ShieldCheck size={15} />{copy.officialFirst}</span>
+          <span><RefreshCw size={15} />{updatedAt} {copy.updated}</span>
+          <span><Fingerprint size={15} />{copy.configValidated}</span>
+        </div>
+      </div>
+      <div class="download-visual" aria-hidden="true">
+        <div class="browser-visual"><div class="browser-bar"><span></span><span></span><span></span></div><BadgeCheck size={72} /><div class="download-progress"><span></span></div><strong>Chrome Stable</strong></div>
+        <small>VERIFIED ROUTE</small>
+      </div>
+    </div>
+  </section>
+
+  <section class="download-center page-shell">
+    <div class="download-heading">
+      <div><span class="eyebrow">{copy.centerEyebrow}</span><h2>{copy.centerTitle}</h2></div>
+      <div class="platform-switch" role="tablist" aria-label={copy.choosePlatform}>
+        {platforms.map(({ id, label, icon: Icon }, index) => <button class:list={["platform-button", { "is-active": index === 0 }]} type="button" role="tab" aria-selected={index === 0 ? "true" : "false"} data-platform={id}><Icon size={15} />{label}</button>)}
+      </div>
+    </div>
+
+    <div class="download-panels">
+      {platforms.map(({ id }, index) => {
+        const platform = config.platforms[id];
+        const primary = localizeDownloadSource(platform.primary, locale);
+        const alternatives = getOrderedDownloadSources(platform.alternatives).map((source) => localizeDownloadSource(source, locale));
+        const PrimaryIcon = typeIcons[primary.type];
+        const PrimaryStatusIcon = statusIcons[primary.status];
+        return (
+          <div class:list={["download-panel", { "is-active": index === 0 }]} data-platform-panel={id}>
+            <article class="download-primary-card">
+              <div class="download-card-head">
+                <span class:list={["channel-icon", primary.type]}><PrimaryIcon size={21} /></span>
+                <div><small>{primary.provider} · {copy.types[primary.type]}</small><h3>{primary.name}</h3></div>
+                <em>{copy.recommended}</em>
+              </div>
+              <p>{primary.description}</p>
+              <dl>{primary.details?.map((detail) => <div><dt>{detail.label}</dt><dd>{detail.value}</dd></div>)}</dl>
+              <div class="primary-source-state"><PrimaryStatusIcon size={13} />{copy.statuses[primary.status]} · {primary.checkedAt} {copy.checked}</div>
+              {isAllowedUrl(primary) ? <a class="button button-primary" href={primary.url} target="_blank" rel="noreferrer noopener">{primary.actionLabel}<ExternalLink size={15} /></a> : <span class="disabled-link">{copy.protocolDisabled}</span>}
+            </article>
+            <div class="download-alternatives">
+              {alternatives.map((source) => {
+                const TypeIcon = typeIcons[source.type];
+                const StatusIcon = statusIcons[source.status];
+                return (
+                  <article class:list={["download-route", `${source.type}-route`, `status-${source.status}`]}>
+                    <div class="route-topline"><span class={`route-kind ${source.type}`}><TypeIcon size={14} />{copy.types[source.type]}</span><em>{source.provider}</em></div>
+                    <h3>{source.name}</h3>
+                    <p>{source.description}</p>
+                    <div class="source-metadata">
+                      <span class={`source-state ${source.status}`}><StatusIcon size={12} />{copy.statuses[source.status]}</span>
+                      <span><Clock3 size={12} />{source.checkedAt} {copy.checked}</span>
+                      {source.formats?.length && <span><PackageCheck size={12} />{source.formats.join(" · ")}</span>}
+                    </div>
+                    {isAllowedUrl(source) ? <a href={source.url} target="_blank" rel="noreferrer noopener">{source.actionLabel}<ArrowUpRight size={14} /></a> : <span class="disabled-link">{copy.protocolDisabled}</span>}
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </section>
+
+  <section class="download-safety">
+    <div class="page-shell safety-grid">
+      <div><span class="eyebrow">{copy.safetyEyebrow}</span><h2>{copy.safetyTitle}</h2></div>
+      <ol>{copy.safety.map(([title, description], index) => <li><span>0{index + 1}</span><p><strong>{title}</strong>{description}</p></li>)}</ol>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  const buttons = [...document.querySelectorAll<HTMLElement>("[data-platform]")];
+  const panels = [...document.querySelectorAll<HTMLElement>("[data-platform-panel]")];
+  function selectPlatform(platform: string) {
+    buttons.forEach((button) => { const active = button.dataset.platform === platform; button.classList.toggle("is-active", active); button.setAttribute("aria-selected", String(active)); });
+    panels.forEach((panel) => panel.classList.toggle("is-active", panel.dataset.platformPanel === platform));
+  }
+  buttons.forEach((button) => button.addEventListener("click", () => selectPlatform(button.dataset.platform || "windows")));
+  const agent = navigator.userAgent.toLowerCase();
+  selectPlatform(agent.includes("mac") ? "macos" : agent.includes("linux") ? "linux" : "windows");
+</script>

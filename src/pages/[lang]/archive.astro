@@ -1,0 +1,23 @@
+---
+import ReleaseCard from "../../components/ReleaseCard.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getLocaleStaticPaths, getUi, requireLocale } from "../../lib/i18n";
+import { getPublishedReleases } from "../../lib/releases";
+
+export function getStaticPaths() { return getLocaleStaticPaths(); }
+
+const locale = requireLocale(Astro.params.lang);
+const copy = getUi(locale).archive;
+const releases = await getPublishedReleases(locale);
+---
+
+<BaseLayout locale={locale} title={copy.title} description={copy.description}>
+  <section class="page-intro page-shell">
+    <span class="eyebrow">{copy.eyebrow}</span>
+    <h1>{copy.heading}</h1>
+    <p>{copy.summary}</p>
+  </section>
+  <section class="page-shell archive-page-list">
+    {releases.map((release) => <ReleaseCard release={release} locale={locale} />)}
+  </section>
+</BaseLayout>

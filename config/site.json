@@ -1,0 +1,50 @@
+{
+  "name": "Release Radar",
+  "productName": "Chrome",
+  "titleSuffix": "Release Radar for Chrome",
+  "description": "社区维护的 Chrome 更新追踪、使用指南与下载入口，不隶属于 Google。",
+  "language": "zh-CN",
+  "locale": "zh-CN",
+  "timezone": "Asia/Shanghai",
+  "repositoryUrl": "https://github.com/Shonee/chrome-release-monitor",
+  "brand": {
+    "logoUrl": "https://cdn.simpleicons.org/googlechrome",
+    "logoAlt": "Chrome",
+    "unofficialLabel": "Unofficial"
+  },
+  "navigation": [
+    { "label": "最新更新", "href": "/" },
+    { "label": "版本归档", "href": "/archive/" },
+    { "label": "数据来源", "href": "/sources/" },
+    { "label": "下载 Chrome", "href": "/downloads/" }
+  ],
+  "links": {
+    "rss": "/rss.xml",
+    "jsonFeed": "/feed.json",
+    "license": "https://github.com/Shonee/chrome-release-monitor/blob/master/LICENSE"
+  },
+  "home": {
+    "eyebrow": "Chrome release intelligence",
+    "headline": "及时了解 Chrome 每次更新",
+    "summary": "自动检测稳定版变化，将官方发布信息整理为面向普通用户、开发者和企业管理员的中文使用指南。",
+    "downloadLabel": "下载 Chrome"
+  },
+  "translations": {
+    "en": {
+      "titleSuffix": "Release Radar for Chrome",
+      "description": "A community-maintained Chrome release tracker, usage guide, and download directory. Not affiliated with Google.",
+      "navigation": [
+        { "label": "Latest", "href": "/" },
+        { "label": "Archive", "href": "/archive/" },
+        { "label": "Sources", "href": "/sources/" },
+        { "label": "Download Chrome", "href": "/downloads/" }
+      ],
+      "home": {
+        "eyebrow": "Chrome release intelligence",
+        "headline": "Understand every Chrome release",
+        "summary": "Track Stable channel changes and turn official release information into practical guidance for users, developers, and enterprise administrators.",
+        "downloadLabel": "Download Chrome"
+      }
+    }
+  }
+}

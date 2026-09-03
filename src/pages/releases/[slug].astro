@@ -1,0 +1,15 @@
+---
+import LocaleRedirect from "../../components/LocaleRedirect.astro";
+import { getPublishedReleases, releaseSlug } from "../../lib/releases";
+
+export async function getStaticPaths() {
+  const releases = await getPublishedReleases("zh-cn");
+  return releases.map((release) => ({
+    params: { slug: releaseSlug(release) }
+  }));
+}
+
+const slug = Astro.params.slug;
+---
+
+<LocaleRedirect targetPath={`/releases/${slug}/`} />

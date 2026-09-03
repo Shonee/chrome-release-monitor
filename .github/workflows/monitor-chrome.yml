@@ -1,0 +1,58 @@
+name: Monitor Chrome releases
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 */6 * * *"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: chrome-release-monitor
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ASSET_REPO_TOKEN: ${{ secrets.ASSET_REPO_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run collect
+      - run: npm run sync:assets
+      - run: npm run check
+      - run: npm run build
+      - name: Detect repository changes
+        id: changes
+        run: |
+          if git diff --quiet -- data/release-state.json src/content/releases; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Create or update release pull request
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          BRANCH_NAME: automation/chrome-release-update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C "$BRANCH_NAME"
+          git add data/release-state.json src/content/releases
+          git commit -m "content: update Chrome release records"
+          git push --force-with-lease origin "$BRANCH_NAME"
+          if gh pr view "$BRANCH_NAME" >/dev/null 2>&1; then
+            gh pr edit "$BRANCH_NAME" --title "content: update Chrome release records" --body "Automated Chrome Stable detection. Review generated drafts and source boundaries before publishing."
+          else
+            gh pr create --base "${{ github.event.repository.default_branch }}" --head "$BRANCH_NAME" --title "content: update Chrome release records" --body "Automated Chrome Stable detection. Review generated drafts and source boundaries before publishing."
+          fi

@@ -1,0 +1,199 @@
+{
+  "updatedAt": "2026-09-03T11:05:00+08:00",
+  "allowHttp": false,
+  "platforms": {
+    "windows": {
+      "primary": {
+        "id": "google-windows",
+        "name": "Chrome for Windows",
+        "provider": "Google",
+        "type": "official",
+        "url": "https://www.google.com/chrome/download-chrome/",
+        "enabled": true,
+        "status": "verified",
+        "checkedAt": "2026-09-03",
+        "description": "适合普通用户的最新版在线安装程序，由 Chrome 官方下载页自动选择系统架构。",
+        "details": [
+          { "label": "平台", "value": "Windows 10 / 11" },
+          { "label": "架构", "value": "x64 · ARM64" },
+          { "label": "渠道", "value": "Stable" }
+        ],
+        "actionLabel": "前往官方下载"
+      },
+      "alternatives": [
+        {
+          "id": "lylares-windows",
+          "name": "LYLARES Chrome 离线包",
+          "provider": "LYLARES",
+          "type": "community",
+          "url": "https://chrome.lylares.com/",
+          "enabled": true,
+          "status": "verified",
+          "checkedAt": "2026-09-03",
+          "formats": ["EXE", "SHA-256"],
+          "description": "国内可访问的社区索引，提供 Windows 多架构版本、SHA-256 与代理开关。代理下载仍需自行核对最终文件签名。",
+          "actionLabel": "打开国内社区入口"
+        },
+        {
+          "id": "clang-windows",
+          "name": "苍狼山庄 Chrome 下载索引",
+          "provider": "Clang.CN",
+          "type": "community",
+          "url": "https://chrome.clang.cn/",
+          "enabled": true,
+          "status": "monitoring",
+          "checkedAt": "2026-09-03",
+          "formats": ["EXE", "MSI", "SHA-256"],
+          "description": "国内社区维护的版本与校验信息页。当前正式版下载线路包含 Google 域名，不应视为独立镜像。",
+          "actionLabel": "查看社区下载索引"
+        },
+        {
+          "id": "project-windows-custom",
+          "name": "项目维护者备用下载",
+          "provider": "Release Radar",
+          "type": "custom",
+          "url": "https://github.com/Shonee/chrome-release-monitor/releases",
+          "enabled": true,
+          "status": "planned",
+          "checkedAt": "2026-09-03",
+          "formats": ["直链", "GitHub Releases", "网盘"],
+          "description": "自定义来源示例。可在配置文件中替换为阿里云 OSS、网盘分享、组织制品库或任意 HTTPS 下载地址。",
+          "actionLabel": "打开自定义下载"
+        },
+        {
+          "id": "google-enterprise-windows",
+          "name": "Chrome Enterprise Bundle",
+          "provider": "Google",
+          "type": "enterprise",
+          "url": "https://chromeenterprise.google/intl/zh_cn/download/",
+          "enabled": true,
+          "status": "verified",
+          "checkedAt": "2026-09-03",
+          "formats": ["MSI", "Bundle"],
+          "description": "提供 MSI、策略模板和企业 Bundle，适合批量部署与离线安装。",
+          "actionLabel": "前往企业下载页"
+        }
+      ]
+    },
+    "macos": {
+      "primary": {
+        "id": "google-macos",
+        "name": "Chrome for macOS",
+        "provider": "Google",
+        "type": "official",
+        "url": "https://www.google.com/chrome/download-chrome/",
+        "enabled": true,
+        "status": "verified",
+        "checkedAt": "2026-09-03",
+        "description": "官方页面会根据设备提供 Apple 芯片或 Intel 版本，安装前应确认 Mac 的处理器类型。",
+        "details": [
+          { "label": "平台", "value": "macOS" },
+          { "label": "架构", "value": "Apple Silicon · Intel" },
+          { "label": "格式", "value": "DMG" }
+        ],
+        "actionLabel": "前往官方下载"
+      },
+      "alternatives": [
+        {
+          "id": "clang-macos",
+          "name": "苍狼山庄 macOS 下载索引",
+          "provider": "Clang.CN",
+          "type": "community",
+          "url": "https://chrome.clang.cn/",
+          "enabled": true,
+          "status": "monitoring",
+          "checkedAt": "2026-09-03",
+          "formats": ["DMG", "SHA-256"],
+          "description": "提供 macOS 版本、文件大小和 SHA-256 信息；当前安装包线路仍指向 Google CDN，仅作为国内索引备用。",
+          "actionLabel": "查看 macOS 下载索引"
+        },
+        {
+          "id": "project-macos-custom",
+          "name": "项目维护者备用下载",
+          "provider": "Release Radar",
+          "type": "custom",
+          "url": "https://github.com/Shonee/chrome-release-monitor/releases",
+          "enabled": true,
+          "status": "planned",
+          "checkedAt": "2026-09-03",
+          "formats": ["DMG", "直链", "网盘"],
+          "description": "用于配置非 Google 的可信备用地址，例如阿里云 OSS、123 云盘、夸克网盘或内部制品库。",
+          "actionLabel": "打开自定义下载"
+        },
+        {
+          "id": "google-enterprise-macos",
+          "name": "Chrome Enterprise PKG",
+          "provider": "Google",
+          "type": "enterprise",
+          "url": "https://chromeenterprise.google/intl/zh_cn/download/",
+          "enabled": true,
+          "status": "verified",
+          "checkedAt": "2026-09-03",
+          "formats": ["PKG"],
+          "description": "适合 MDM、集中管理和组织内部的软件分发流程。",
+          "actionLabel": "前往企业下载页"
+        }
+      ]
+    },
+    "linux": {
+      "primary": {
+        "id": "google-linux",
+        "name": "Chrome for Linux",
+        "provider": "Google",
+        "type": "official",
+        "url": "https://www.google.com/chrome/download-chrome/",
+        "enabled": true,
+        "status": "verified",
+        "checkedAt": "2026-09-03",
+        "description": "官方下载页提供 Debian/Ubuntu 使用的 DEB，以及 Fedora/openSUSE 使用的 RPM 软件包。",
+        "details": [
+          { "label": "格式", "value": "64-bit DEB · RPM" },
+          { "label": "渠道", "value": "Stable" },
+          { "label": "来源", "value": "Google" }
+        ],
+        "actionLabel": "前往官方下载"
+      },
+      "alternatives": [
+        {
+          "id": "aliyun-linux",
+          "name": "阿里云 Google Chrome 镜像",
+          "provider": "Aliyun Mirrors",
+          "type": "mirror",
+          "url": "https://mirrors.aliyun.com/google-chrome/",
+          "enabled": true,
+          "status": "verified",
+          "checkedAt": "2026-09-03",
+          "formats": ["RPM"],
+          "description": "阿里云镜像站提供 Linux Stable RPM。该渠道并非 Google 官方发布页，安装后仍应核对包签名和版本。",
+          "actionLabel": "打开阿里云镜像"
+        },
+        {
+          "id": "project-linux-custom",
+          "name": "项目维护者备用下载",
+          "provider": "Release Radar",
+          "type": "custom",
+          "url": "https://github.com/Shonee/chrome-release-monitor/releases",
+          "enabled": true,
+          "status": "planned",
+          "checkedAt": "2026-09-03",
+          "formats": ["DEB", "RPM", "直链"],
+          "description": "可替换为项目维护者审核并同步到对象存储、制品库或网盘的下载地址。",
+          "actionLabel": "打开自定义下载"
+        },
+        {
+          "id": "google-enterprise-linux",
+          "name": "Chrome Enterprise Linux",
+          "provider": "Google",
+          "type": "enterprise",
+          "url": "https://chromeenterprise.google/intl/zh_cn/download/",
+          "enabled": true,
+          "status": "verified",
+          "checkedAt": "2026-09-03",
+          "formats": ["DEB", "RPM"],
+          "description": "适合需要策略模板和集中部署资料的 Linux 管理环境。",
+          "actionLabel": "前往企业下载页"
+        }
+      ]
+    }
+  }
+}

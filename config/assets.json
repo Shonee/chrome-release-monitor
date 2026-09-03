@@ -1,0 +1,17 @@
+{
+  "enabled": false,
+  "repository": "Shonee/chrome-release-radar-assets",
+  "branch": "main",
+  "pathPrefix": "releases",
+  "cdnBaseUrl": "https://cdn.jsdelivr.net/gh/Shonee/chrome-release-radar-assets@main",
+  "githubApiUrl": "https://api.github.com",
+  "tokenEnv": "ASSET_REPO_TOKEN",
+  "maxFileBytes": 8388608,
+  "allowedMimeTypes": ["image/png", "image/jpeg", "image/webp", "image/gif"],
+  "allowedSourceHosts": [
+    "developer.chrome.com",
+    "storage.googleapis.com",
+    "lh3.googleusercontent.com",
+    "www.gstatic.com"
+  ]
+}

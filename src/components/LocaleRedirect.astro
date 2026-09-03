@@ -1,0 +1,44 @@
+---
+import { Languages } from "lucide-astro";
+import { withBase } from "../lib/urls";
+import "../styles/global.css";
+
+interface Props {
+  targetPath?: string;
+}
+
+const { targetPath = "/" } = Astro.props;
+const normalizedTarget = targetPath === "/" ? "/" : `/${targetPath.replace(/^\/+|\/+$/g, "")}/`;
+const zhHref = withBase(`/zh-cn${normalizedTarget}`);
+const enHref = withBase(`/en${normalizedTarget}`);
+const base = import.meta.env.BASE_URL;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>Release Radar for Chrome</title>
+    <script is:inline define:vars={{ base, normalizedTarget }}>
+      const storedLocale = localStorage.getItem("release-radar-locale");
+      const browserLanguages = navigator.languages?.length ? navigator.languages : [navigator.language];
+      const browserLocale = browserLanguages.some((language) => language?.toLowerCase().startsWith("zh")) ? "zh-cn" : "en";
+      const locale = storedLocale === "zh-cn" || storedLocale === "en" ? storedLocale : browserLocale;
+      const normalizedBase = base.endsWith("/") ? base : `${base}/`;
+      window.location.replace(`${normalizedBase}${locale}${normalizedTarget}`);
+    </script>
+  </head>
+  <body class="locale-redirect-page">
+    <main class="locale-redirect">
+      <Languages size={28} />
+      <strong>Release Radar for Chrome</strong>
+      <p>Select a language / 选择语言</p>
+      <nav aria-label="Language selection">
+        <a href={zhHref}>简体中文</a>
+        <a href={enHref}>English</a>
+      </nav>
+    </main>
+  </body>
+</html>

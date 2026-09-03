@@ -1,0 +1,18 @@
+{
+  "type": "design",
+  "designSystems": [],
+  "primaryDesignSystem": null,
+  "assets": {
+    "Chrome Release Site Prototype": {
+      "versions": [
+        {
+          "path": "index.html",
+          "createdAt": "2026-09-03T02:33:54.330Z",
+          "status": "needs-review"
+        }
+      ]
+    }
+  },
+  "createdAt": "2026-09-03T02:33:54.337Z",
+  "updatedAt": "2026-09-03T03:13:02.342Z"
+}

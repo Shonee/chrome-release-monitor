@@ -1,0 +1,12 @@
+{
+  "exportsDirectory": "public/exports",
+  "siteAuthor": "Release Radar Contributors",
+  "includeSourceLinks": true,
+  "wechat": {
+    "fontFamily": "-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif",
+    "textColor": "#242424",
+    "accentColor": "#1a73e8",
+    "quoteColor": "#188038",
+    "maxWidth": "677px"
+  }
+}

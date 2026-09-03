@@ -1,0 +1,104 @@
+---
+import { Download, Github, Languages, Moon, Search, Sun, X } from "lucide-astro";
+import { getSiteConfig } from "../lib/config";
+import { getPublishedReleases, releasePath } from "../lib/releases";
+import { alternateLocalePath, getUi, localeMeta, localizeSite, localizedPath, type Locale } from "../lib/i18n";
+import { isExternalUrl, withBase } from "../lib/urls";
+
+interface Props { locale: Locale; }
+
+const { locale } = Astro.props;
+const copy = getUi(locale).header;
+const site = localizeSite(getSiteConfig(), locale);
+const releases = await getPublishedReleases(locale);
+const currentPath = Astro.url.pathname;
+const resolveHref = (href: string) => (isExternalUrl(href) ? href : localizedPath(locale, href));
+const isActive = (href: string) => {
+  if (isExternalUrl(href)) return false;
+  const resolved = resolveHref(href);
+  return href === "/" ? currentPath === resolved : currentPath.startsWith(resolved);
+};
+const alternateLocale: Locale = locale === "en" ? "zh-cn" : "en";
+const alternateHref = alternateLocalePath(currentPath, alternateLocale);
+---
+
+<header class="site-header">
+  <div class="header-inner">
+    <a class="brand" href={localizedPath(locale)} aria-label={copy.home}>
+      <img src={site.brand.logoUrl} alt={site.brand.logoAlt} width="36" height="36" />
+      <span>
+        <strong>{site.name}</strong>
+        <small>for {site.productName} · {site.brand.unofficialLabel}</small>
+      </span>
+    </a>
+
+    <nav class="primary-nav" aria-label={copy.navigation}>
+      {
+        site.navigation.map((item) => (
+          <a
+            class:list={["nav-link", { "is-active": isActive(item.href) }]}
+            href={resolveHref(item.href)}
+            target={isExternalUrl(item.href) ? "_blank" : undefined}
+            rel={isExternalUrl(item.href) ? "noreferrer noopener" : undefined}
+          >
+            {item.label}
+          </a>
+        ))
+      }
+    </nav>
+
+    <div class="header-actions">
+      <a class="language-switch" href={alternateHref} lang={localeMeta[alternateLocale].htmlLang} hreflang={localeMeta[alternateLocale].htmlLang} data-locale-choice={alternateLocale} title={localeMeta[alternateLocale].label}>
+        <Languages size={16} /><span>{localeMeta[alternateLocale].shortLabel}</span>
+      </a>
+      <button class="icon-button" type="button" data-search-open aria-label={copy.search} title={copy.search}>
+        <Search size={18} />
+      </button>
+      <button class="icon-button" type="button" data-theme-toggle aria-label={copy.theme} title={copy.theme}>
+        <Moon class="theme-icon theme-icon-dark" size={18} />
+        <Sun class="theme-icon theme-icon-light" size={18} />
+      </button>
+      <a class="icon-button" href={site.repositoryUrl} target="_blank" rel="noreferrer noopener" aria-label={copy.repository} title="GitHub">
+        <Github size={18} />
+      </a>
+    </div>
+  </div>
+</header>
+
+<div class="dialog-backdrop" data-search-dialog data-pagefind-url={withBase("/pagefind/pagefind.js")} data-search-locale={locale} data-search-fallback-title={copy.resultFallbackTitle} data-search-fallback-summary={copy.resultFallbackSummary} aria-hidden="true">
+  <section class="search-dialog" role="dialog" aria-modal="true" aria-labelledby="search-title">
+    <header>
+      <div>
+        <span class="eyebrow">{copy.searchEyebrow}</span>
+        <h2 id="search-title">{copy.searchTitle}</h2>
+      </div>
+      <button class="icon-button" type="button" data-search-close aria-label={copy.closeSearch}><X size={18} /></button>
+    </header>
+    <label class="search-field">
+      <Search size={18} />
+      <input type="search" data-search-input placeholder={copy.searchPlaceholder} autocomplete="off" />
+    </label>
+    <div class="search-results" data-search-results>
+      <a data-search-item data-keywords={`${copy.downloadTitle} chrome windows macos linux download mirror community 下载 国内 镜像`.toLowerCase()} href={localizedPath(locale, "/downloads/")}>
+        <Download size={18} />
+        <span><strong>{copy.downloadTitle}</strong><small>{copy.downloadSummary}</small></span>
+      </a>
+      {
+        releases.map((release) => (
+          <a
+            data-search-item
+            data-keywords={`${release.data.title} ${release.data.summary} ${release.data.tags.join(" ")}`.toLowerCase()}
+            href={localizedPath(locale, releasePath(release, locale).replace(`/${locale}`, ""))}
+          >
+            <span class="search-version">M{release.data.milestone}</span>
+            <span><strong>{release.data.title}</strong><small>{release.data.summary}</small></span>
+          </a>
+        ))
+      }
+      <div data-pagefind-results></div>
+      <p class="search-empty" data-search-empty hidden>{copy.noResults}</p>
+    </div>
+  </section>
+</div>
+
+<script is:inline type="module" src={withBase("/scripts/header.js")}></script>

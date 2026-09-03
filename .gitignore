@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.astro/
+.wrangler/
+.DS_Store
+coverage/
+public/exports/
+data/.collector-lock
+*.log

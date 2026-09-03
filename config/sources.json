@@ -1,0 +1,65 @@
+{
+  "updatedAt": "2026-09-03T12:00:00+08:00",
+  "collector": {
+    "apiType": "chromiumdash",
+    "releaseEndpoint": "https://chromiumdash.appspot.com/fetch_releases?channel=Stable&platform={platform}&num=5",
+    "platforms": ["Windows", "Mac", "Linux"],
+    "channel": "Stable",
+    "requestTimeoutMs": 20000,
+    "userAgent": "chrome-release-monitor/0.1 (+https://github.com/Shonee/chrome-release-monitor)"
+  },
+  "officialSources": [
+    {
+      "id": "chrome-releases",
+      "name": "Chrome Releases",
+      "type": "release-blog",
+      "url": "https://chromereleases.googleblog.com/",
+      "description": "稳定版、扩展稳定版和安全更新公告。",
+      "translations": {
+        "en": {
+          "name": "Chrome Releases",
+          "description": "Stable, Extended Stable, and security update announcements."
+        }
+      }
+    },
+    {
+      "id": "chrome-release-notes",
+      "name": "Chrome Release Notes",
+      "type": "release-notes",
+      "urlTemplate": "https://developer.chrome.com/release-notes/{milestone}/",
+      "description": "面向开发者的里程碑功能说明和迁移提示。",
+      "translations": {
+        "en": {
+          "name": "Chrome Release Notes",
+          "description": "Milestone feature notes and migration guidance for developers."
+        }
+      }
+    },
+    {
+      "id": "chrome-status",
+      "name": "Chrome Status",
+      "type": "feature-status",
+      "url": "https://chromestatus.com/",
+      "description": "Web Platform 功能状态、里程碑和标准化信息。",
+      "translations": {
+        "en": {
+          "name": "Chrome Status",
+          "description": "Web Platform feature status, milestones, and standardization information."
+        }
+      }
+    },
+    {
+      "id": "chromium-dashboard",
+      "name": "Chromium Dashboard",
+      "type": "version-api",
+      "url": "https://chromiumdash.appspot.com/",
+      "description": "发布版本、渠道和平台检测数据。",
+      "translations": {
+        "en": {
+          "name": "Chromium Dashboard",
+          "description": "Release version, channel, and platform detection data."
+        }
+      }
+    }
+  ]
+}

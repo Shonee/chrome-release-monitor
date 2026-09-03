@@ -1,0 +1,45 @@
+---
+import { ArrowUpRight, Database, FileSearch, Image, Radio } from "lucide-astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getAssetsConfig, getSourcesConfig } from "../../lib/config";
+import { getLocaleStaticPaths, getUi, localizeOfficialSource, requireLocale } from "../../lib/i18n";
+
+export function getStaticPaths() { return getLocaleStaticPaths(); }
+
+const locale = requireLocale(Astro.params.lang);
+const copy = getUi(locale).sources;
+const sources = getSourcesConfig();
+const assets = getAssetsConfig();
+const sourceIcons = [Radio, FileSearch, Database, Image];
+---
+
+<BaseLayout locale={locale} title={copy.title} description={copy.description}>
+  <section class="page-intro page-shell">
+    <span class="eyebrow">{copy.eyebrow}</span>
+    <h1>{copy.heading}</h1>
+    <p>{copy.summary}</p>
+  </section>
+  <section class="page-shell source-list">
+    {sources.officialSources.map((rawSource, index) => {
+      const source = localizeOfficialSource(rawSource, locale);
+      const Icon = sourceIcons[index % sourceIcons.length];
+      const href = source.url || source.urlTemplate?.replace("{milestone}", "152");
+      return (
+        <article>
+          <Icon size={20} />
+          <div><span>{source.type}</span><h2>{source.name}</h2><p>{source.description}</p></div>
+          {href && <a href={href} target="_blank" rel="noreferrer noopener" aria-label={`${copy.open} ${source.name}`}><ArrowUpRight size={18} /></a>}
+        </article>
+      );
+    })}
+  </section>
+  <section class="page-shell asset-policy">
+    <div><span class="eyebrow">{copy.assetEyebrow}</span><h2>{copy.assetTitle}</h2></div>
+    <dl>
+      <div><dt>{copy.repository}</dt><dd>{assets.repository}</dd></div>
+      <div><dt>{copy.cdn}</dt><dd>{assets.cdnBaseUrl}</dd></div>
+      <div><dt>{copy.mimeTypes}</dt><dd>{assets.allowedMimeTypes.join(" · ")}</dd></div>
+      <div><dt>{copy.fileLimit}</dt><dd>{Math.round(assets.maxFileBytes / 1024 / 1024)} MB</dd></div>
+    </dl>
+  </section>
+</BaseLayout>

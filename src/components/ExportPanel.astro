@@ -1,0 +1,136 @@
+---
+import { Check, Clipboard, CodeXml, FileText, Share2, X } from "lucide-astro";
+import { getUi, type Locale } from "../lib/i18n";
+import { withBase } from "../lib/urls";
+
+interface Props {
+  slug: string;
+  locale: Locale;
+}
+
+const { slug, locale } = Astro.props;
+const copy = getUi(locale).export;
+const exportPrefix = locale === "en" ? "/exports/en" : "/exports";
+const exportUrls = {
+  wechat: withBase(`${exportPrefix}/${slug}.wechat.html`),
+  markdown: withBase(`${exportPrefix}/${slug}.md`),
+  html: withBase(`${exportPrefix}/${slug}.html`)
+};
+const exportLabels = {
+  wechat: `${copy.selected}: ${copy.wechat}`,
+  markdown: `${copy.selected}: ${copy.markdown}`,
+  html: `${copy.selected}: ${copy.html}`,
+  copied: copy.copied,
+  copyFailed: copy.copyFailed,
+  loadFailed: copy.loadFailed
+};
+---
+
+<button class="button button-secondary" type="button" data-export-open>
+  <Share2 size={16} />
+  {copy.open}
+</button>
+
+<div class="dialog-backdrop" data-export-dialog aria-hidden="true">
+  <section class="export-dialog" role="dialog" aria-modal="true" aria-labelledby="export-title" data-export-urls={JSON.stringify(exportUrls)} data-export-labels={JSON.stringify(exportLabels)}>
+    <header>
+      <div><span class="eyebrow">{copy.eyebrow}</span><h2 id="export-title">{copy.title}</h2></div>
+      <button class="icon-button" type="button" data-export-close aria-label={copy.close}><X size={18} /></button>
+    </header>
+    <div class="export-options">
+      <button class="export-option is-active" type="button" data-export-mode="wechat">
+        <Clipboard size={18} /><span><strong>{copy.wechat}</strong><small>{copy.wechatHint}</small></span><Check size={16} />
+      </button>
+      <button class="export-option" type="button" data-export-mode="markdown">
+        <FileText size={18} /><span><strong>{copy.markdown}</strong><small>{copy.markdownHint}</small></span><Check size={16} />
+      </button>
+      <button class="export-option" type="button" data-export-mode="html">
+        <CodeXml size={18} /><span><strong>{copy.html}</strong><small>{copy.htmlHint}</small></span><Check size={16} />
+      </button>
+    </div>
+    <textarea class="export-fallback" data-export-fallback hidden aria-label={copy.fallback}></textarea>
+    <footer>
+      <span data-export-status>{copy.selected}: {copy.wechat}</span>
+      <button class="button button-primary" type="button" data-export-copy><Clipboard size={16} />{copy.copy}</button>
+    </footer>
+  </section>
+</div>
+
+<div class="toast" role="status" aria-live="polite" data-toast><Check size={16} /><span>{copy.copied}</span></div>
+
+<script>
+  const exportDialog = document.querySelector<HTMLElement>("[data-export-dialog]");
+  const exportPanel = document.querySelector<HTMLElement>(".export-dialog");
+  const exportStatus = document.querySelector<HTMLElement>("[data-export-status]");
+  const exportFallback = document.querySelector<HTMLTextAreaElement>("[data-export-fallback]");
+  const toast = document.querySelector<HTMLElement>("[data-toast]");
+  const exportLabels = JSON.parse(exportPanel?.dataset.exportLabels || "{}");
+  let exportMode = "wechat";
+
+  function setExportDialog(open: boolean) {
+    exportDialog?.classList.toggle("is-open", open);
+    exportDialog?.setAttribute("aria-hidden", String(!open));
+    document.body.style.overflow = open ? "hidden" : "";
+  }
+
+  function showToast(message: string) {
+    const label = toast?.querySelector("span");
+    if (label) label.textContent = message;
+    toast?.classList.add("is-visible");
+    window.setTimeout(() => toast?.classList.remove("is-visible"), 2200);
+  }
+
+  async function copyPlainText(content: string) {
+    if (!navigator.clipboard?.writeText) throw new Error("Clipboard is unavailable");
+    await navigator.clipboard.writeText(content);
+  }
+
+  document.querySelector("[data-export-open]")?.addEventListener("click", () => setExportDialog(true));
+  document.querySelector("[data-export-close]")?.addEventListener("click", () => setExportDialog(false));
+  exportDialog?.addEventListener("click", (event) => {
+    if (event.target === exportDialog) setExportDialog(false);
+  });
+
+  document.querySelectorAll<HTMLElement>("[data-export-mode]").forEach((button) => {
+    button.addEventListener("click", () => {
+      exportMode = button.dataset.exportMode || "wechat";
+      if (exportFallback) exportFallback.hidden = true;
+      document.querySelectorAll("[data-export-mode]").forEach((item) => item.classList.remove("is-active"));
+      button.classList.add("is-active");
+      if (exportStatus) exportStatus.textContent = exportLabels[exportMode];
+    });
+  });
+
+  document.querySelector("[data-export-copy]")?.addEventListener("click", async () => {
+    let content = "";
+    try {
+      const urls = JSON.parse(exportPanel?.dataset.exportUrls || "{}");
+      const response = await fetch(urls[exportMode]);
+      if (!response.ok) throw new Error(`Export request failed: ${response.status}`);
+      content = await response.text();
+      if (exportMode === "wechat" && window.ClipboardItem && navigator.clipboard?.write) {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            "text/html": new Blob([content], { type: "text/html" }),
+            "text/plain": new Blob([content], { type: "text/plain" })
+          })
+        ]);
+      } else {
+        await copyPlainText(content);
+      }
+      if (exportFallback) exportFallback.hidden = true;
+      showToast(exportLabels.copied);
+    } catch (error) {
+      console.error(error);
+      if (content && exportFallback) {
+        exportFallback.value = content;
+        exportFallback.hidden = false;
+        exportFallback.focus();
+        exportFallback.select();
+        showToast(exportLabels.copyFailed);
+      } else {
+        showToast(exportLabels.loadFailed);
+      }
+    }
+  });
+</script>

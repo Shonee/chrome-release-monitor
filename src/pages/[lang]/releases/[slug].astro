@@ -1,0 +1,84 @@
+---
+import { ArrowLeft, CalendarCheck2, CalendarDays, Download, ExternalLink, History, ShieldCheck } from "lucide-astro";
+import { render } from "astro:content";
+import ExportPanel from "../../../components/ExportPanel.astro";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { getUi, localeMeta, localizedPath, supportedLocales, type Locale } from "../../../lib/i18n";
+import { getPublishedReleases, releaseSlug } from "../../../lib/releases";
+
+export async function getStaticPaths() {
+  const paths = await Promise.all(supportedLocales.map(async (locale) => {
+    const releases = await getPublishedReleases(locale);
+    return releases.map((release) => ({ params: { lang: locale, slug: releaseSlug(release) }, props: { locale, release } }));
+  }));
+  return paths.flat();
+}
+
+const { locale, release } = Astro.props as { locale: Locale; release: Awaited<ReturnType<typeof getPublishedReleases>>[number] };
+const copy = getUi(locale).article;
+const { Content, headings } = await render(release);
+const slug = releaseSlug(release);
+const publishedAt = new Intl.DateTimeFormat(localeMeta[locale].dateLocale, { dateStyle: "long" }).format(release.data.publishedAt);
+const updatedAt = new Intl.DateTimeFormat(localeMeta[locale].dateLocale, { dateStyle: "long", timeStyle: "short" }).format(release.data.updatedAt);
+const dateFormatter = new Intl.DateTimeFormat(localeMeta[locale].dateLocale, { dateStyle: "long" });
+const stableReleasedAt = release.data.stableReleasedAt ? dateFormatter.format(release.data.stableReleasedAt) : null;
+const versionReleasedAt = release.data.versionReleasedAt ? dateFormatter.format(release.data.versionReleasedAt) : null;
+const coverImage = release.data.images[0];
+const galleryImages = release.data.images.slice(1);
+---
+
+<BaseLayout locale={locale} title={release.data.title} description={release.data.summary}>
+  <article class="article-page">
+    <header class="article-header page-shell">
+      <a class="back-link" href={localizedPath(locale)}><ArrowLeft size={15} />{copy.back}</a>
+      <div class="article-labels"><span>Chrome M{release.data.milestone}</span><span>{release.data.channel}</span><span>{release.data.status}</span></div>
+      <h1>{release.data.title}</h1>
+      <p class="article-deck">{release.data.summary}</p>
+      <div class="article-byline">
+        <span><CalendarDays size={15} />{copy.published} {publishedAt}</span>
+        <span>{copy.updated} {updatedAt}</span>
+        <span>{release.data.platforms.join(" · ")}</span>
+      </div>
+      <div class="article-actions">
+        <ExportPanel slug={slug} locale={locale} />
+        <a class="button button-secondary" href={localizedPath(locale, "/downloads/")}><Download size={16} />{copy.download}</a>
+      </div>
+    </header>
+
+    {coverImage && (
+      <figure class="article-cover page-shell">
+        <div class="article-image-frame">
+          <img src={coverImage.src} alt={coverImage.alt} loading="eager" fetchpriority="high" data-official-image />
+          <div class="article-image-fallback"><span>{copy.imageUnavailable}</span><small>{copy.imageHint}</small></div>
+        </div>
+        <figcaption><span>{coverImage.alt}</span>{coverImage.officialSource && <a href={coverImage.officialSource} target="_blank" rel="noreferrer noopener">{copy.imageSource}<ExternalLink size={13} /></a>}</figcaption>
+      </figure>
+    )}
+
+    <div class="article-layout page-shell">
+      <aside class="article-toc"><span>{copy.toc}</span><nav>{headings.filter((heading) => heading.depth === 2).map((heading) => <a href={`#${heading.slug}`}>{heading.text}</a>)}</nav></aside>
+      <div class="article-content" data-pagefind-body data-pagefind-filter={`lang:${locale}`}>
+        <Content />
+        {galleryImages.length > 0 && (
+          <section class="article-images"><h2>{copy.moreImages}</h2>{galleryImages.map((image) => <figure><div class="article-image-frame"><img src={image.src} alt={image.alt} loading="lazy" data-official-image /><div class="article-image-fallback"><span>{copy.imageUnavailable}</span><small>{copy.galleryHint}</small></div></div><figcaption>{image.alt}{image.officialSource && <a href={image.officialSource} target="_blank" rel="noreferrer noopener">{copy.gallerySource}<ExternalLink size={13} /></a>}</figcaption></figure>)}</section>
+        )}
+      </div>
+      <aside class="article-meta">
+        <div><span>{copy.fullVersion}</span><strong>{release.data.version}</strong></div>
+        <div><span>{copy.milestone}</span><strong>M{release.data.milestone}</strong></div>
+        {stableReleasedAt && <div><span><CalendarCheck2 size={13} />{copy.stableReleased}</span><strong>{stableReleasedAt}</strong></div>}
+        {versionReleasedAt && <div><span><History size={13} />{copy.versionReleased}</span><strong>{versionReleasedAt}</strong></div>}
+        {release.data.securityFixes !== undefined && <div><span>{copy.securityFixes}</span><strong>{release.data.securityFixes}</strong></div>}
+        <div class="article-source-block"><span><ShieldCheck size={14} />{copy.sources}</span>{release.data.sources.map((source) => <a href={source.url} target="_blank" rel="noreferrer noopener">{source.label}<ExternalLink size={12} /></a>)}</div>
+      </aside>
+    </div>
+  </article>
+</BaseLayout>
+
+<script>
+  document.querySelectorAll<HTMLImageElement>("[data-official-image]").forEach((image) => {
+    const markUnavailable = () => image.closest(".article-image-frame")?.classList.add("is-unavailable");
+    image.addEventListener("error", markUnavailable);
+    if (image.complete && image.naturalWidth === 0) markUnavailable();
+  });
+</script>

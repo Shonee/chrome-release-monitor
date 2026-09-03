@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Release Radar for Chrome 页面样式原型" />
+    <title>Release Radar for Chrome</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="header-inner">
+        <button class="brand-button" type="button" data-nav="home" aria-label="返回首页">
+          <img
+            class="brand-logo"
+            src="https://www.google.com/chrome/static/images/chrome-logo-m100.svg"
+            alt="Chrome"
+          />
+          <span class="brand-copy">
+            <strong>Release Radar</strong>
+            <small>for Chrome · Unofficial</small>
+          </span>
+        </button>
+
+        <nav class="primary-nav" aria-label="主导航">
+          <button class="nav-link is-active" type="button" data-nav="home">最新更新</button>
+          <button class="nav-link" type="button" data-scroll="archive">版本归档</button>
+          <button class="nav-link" type="button" data-scroll="sources">数据来源</button>
+          <button class="nav-link" type="button" data-nav="download">下载 Chrome</button>
+        </nav>
+
+        <div class="header-actions">
+          <button class="icon-button" type="button" data-action="search" aria-label="搜索更新" title="搜索">
+            <i data-lucide="search"></i>
+          </button>
+          <button class="icon-button" type="button" data-action="theme" aria-label="切换主题" title="切换主题">
+            <i data-lucide="moon"></i>
+          </button>
+          <a class="icon-button" href="#" aria-label="GitHub 仓库" title="GitHub">
+            <i data-lucide="github"></i>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div id="home-view" class="view is-active" data-screen-label="最新更新首页">
+        <section class="release-hero page-shell">
+          <div class="release-kicker">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span>Stable Channel</span>
+            <span class="divider" aria-hidden="true"></span>
+            <span>自动检测于 2026-09-03 09:40 CST</span>
+          </div>
+
+          <div class="hero-grid">
+            <div class="hero-copy">
+              <div class="version-row">
+                <span class="version-mark">M152</span>
+                <span class="version-type">桌面稳定版</span>
+              </div>
+              <h1>Chrome 152<br />更新与使用指南</h1>
+              <p class="hero-summary">
+                本次版本带来新的 Web 平台能力、历史导航识别、滚动触发动画，以及一批安全修复。本文按普通用户、开发者与企业管理员三个视角整理。
+              </p>
+              <div class="hero-actions">
+                <button class="button button-primary" type="button" data-nav="article">
+                  阅读完整更新
+                  <i data-lucide="arrow-right"></i>
+                </button>
+                <button class="button button-secondary" type="button" data-action="export">
+                  <i data-lucide="copy"></i>
+                  复制与发布
+                </button>
+                <button class="button button-secondary" type="button" data-nav="download">
+                  <i data-lucide="download"></i>
+                  下载 Chrome
+                </button>
+              </div>
+            </div>
+
+            <aside class="release-summary" aria-label="版本摘要">
+              <div class="summary-head">
+                <span>版本状态</span>
+                <strong>已发布</strong>
+              </div>
+              <dl class="summary-list">
+                <div>
+                  <dt>发布时间</dt>
+                  <dd>2026-08-25</dd>
+                </div>
+                <div>
+                  <dt>最新补丁</dt>
+                  <dd>152.0.7977.76</dd>
+                </div>
+                <div>
+                  <dt>安全修复</dt>
+                  <dd><span class="risk-mark">26 项</span></dd>
+                </div>
+                <div>
+                  <dt>覆盖平台</dt>
+                  <dd>Win · macOS · Linux</dd>
+                </div>
+              </dl>
+              <div class="source-health">
+                <div>
+                  <span>来源完整度</span>
+                  <strong>5 / 6</strong>
+                </div>
+                <div class="health-track" aria-label="来源完整度 83%">
+                  <span style="width: 83%"></span>
+                </div>
+                <small>What's New 页面仍在补充灰度信息</small>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="signal-band">
+          <div class="page-shell signal-grid">
+            <div class="signal-label">
+              <i data-lucide="radio-tower"></i>
+              <span>Release signal</span>
+            </div>
+            <p>Chrome 153 预计于 2026-09-08 进入 Stable，新版发布节奏将调整为每两周一次。</p>
+            <button type="button" data-action="details">查看检测记录</button>
+          </div>
+        </section>
+
+        <section class="content-section page-shell" aria-labelledby="highlights-title">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">What changed</span>
+              <h2 id="highlights-title">值得关注的变化</h2>
+            </div>
+            <span class="section-count">5 个重点</span>
+          </div>
+
+          <div class="highlight-grid">
+            <article class="highlight-feature">
+              <div class="feature-index">01</div>
+              <div class="feature-copy">
+                <span class="topic-label">Web Platform</span>
+                <h3>滚动触发动画进入稳定版</h3>
+                <p>动画可以在元素进入指定滚动范围后开始执行，适合延迟加载、内容呈现和长页面叙事。</p>
+                <button type="button" data-nav="article" data-anchor="scroll-animations">
+                  查看使用方式
+                  <i data-lucide="arrow-up-right"></i>
+                </button>
+              </div>
+              <div class="code-visual" aria-label="滚动动画代码示例">
+                <div class="code-toolbar">
+                  <span></span><span></span><span></span>
+                  <em>scroll-trigger.css</em>
+                </div>
+                <pre><code><span class="token-selector">.notice</span> {
+  <span class="token-key">animation</span>: reveal .45s ease;
+  <span class="token-key">animation-trigger</span>:
+    <span class="token-value">view()</span>;
+}</code></pre>
+              </div>
+            </article>
+
+            <article class="highlight-item">
+              <div class="feature-index">02</div>
+              <span class="topic-label">Navigation</span>
+              <h3>识别历史记录导航</h3>
+              <p>`Request.isHistoryNavigation` 帮助应用区分普通请求与前进、后退触发的导航。</p>
+              <span class="availability"><i data-lucide="circle-check"></i> 全平台可用</span>
+            </article>
+
+            <article class="highlight-item">
+              <div class="feature-index">03</div>
+              <span class="topic-label">HTML</span>
+              <h3>声明式命令调用更完整</h3>
+              <p>`commandfor` 让按钮与目标元素建立声明式关联，减少重复的事件绑定。</p>
+              <span class="availability"><i data-lucide="flask-conical"></i> 建议兼容性检测</span>
+            </article>
+
+            <article class="highlight-item security-item">
+              <div class="feature-index">04</div>
+              <span class="topic-label">Security</span>
+              <h3>桌面端补丁修复 26 项安全问题</h3>
+              <p>更新文档将安全等级、CVE、平台版本和官方披露状态分开记录。</p>
+              <span class="availability risk"><i data-lucide="shield-alert"></i> 建议尽快更新</span>
+            </article>
+
+            <article class="highlight-item">
+              <div class="feature-index">05</div>
+              <span class="topic-label">CSS</span>
+              <h3>锚点定位支持查询容器</h3>
+              <p>锚点定位元素现在可以使用 `container-type` 参与样式和布局判断。</p>
+              <span class="availability"><i data-lucide="code-2"></i> 开发者更新</span>
+            </article>
+          </div>
+        </section>
+
+        <section class="visual-section" aria-labelledby="visual-title">
+          <div class="page-shell">
+            <div class="section-heading">
+              <div>
+                <span class="eyebrow">Official media</span>
+                <h2 id="visual-title">官方功能视觉资料</h2>
+              </div>
+              <button class="text-button" type="button" data-action="asset-info">
+                查看归档策略
+                <i data-lucide="database"></i>
+              </button>
+            </div>
+
+            <div class="media-grid">
+              <figure class="media-primary">
+                <img
+                  src="https://www.google.com/chrome/static/images/intl/zh_Hans_CN/whats-new/143/autofill-2x.png"
+                  alt="Chrome 官方自动填充功能演示"
+                />
+                <figcaption>
+                  <div>
+                    <strong>自动填充体验</strong>
+                    <span>Google Chrome What's New</span>
+                  </div>
+                  <span class="asset-state"><i data-lucide="archive"></i> 待镜像</span>
+                </figcaption>
+              </figure>
+
+              <figure class="media-secondary">
+                <img
+                  src="https://www.google.com/chrome/static/images/v2/whats-new/thumbnails/mac/vertical-tabs-thumbnail-2x.webp"
+                  alt="Chrome 官方垂直标签页功能演示"
+                />
+                <figcaption>
+                  <div>
+                    <strong>垂直标签页</strong>
+                    <span>macOS · 官方缩略图</span>
+                  </div>
+                </figcaption>
+              </figure>
+
+              <figure class="media-secondary">
+                <img
+                  src="https://www.google.com/chrome/static/images/v2/whats-new/thumbnails/pdf-annotations.png"
+                  alt="Chrome 官方 PDF 标注功能演示"
+                />
+                <figcaption>
+                  <div>
+                    <strong>PDF 标注</strong>
+                    <span>Chrome What's New</span>
+                  </div>
+                </figcaption>
+              </figure>
+            </div>
+          </div>
+        </section>
+
+        <section id="archive" class="content-section page-shell archive-section" aria-labelledby="archive-title">
+          <div class="section-heading archive-heading">
+            <div>
+              <span class="eyebrow">Release archive</span>
+              <h2 id="archive-title">版本归档</h2>
+            </div>
+            <div class="filter-control" aria-label="版本筛选">
+              <button class="filter-button is-active" type="button" data-filter="all">全部</button>
+              <button class="filter-button" type="button" data-filter="stable">Stable</button>
+              <button class="filter-button" type="button" data-filter="security">安全更新</button>
+            </div>
+          </div>
+
+          <div class="release-table" role="table" aria-label="Chrome 版本更新归档">
+            <div class="release-table-head" role="row">
+              <span role="columnheader">版本</span>
+              <span role="columnheader">发布时间</span>
+              <span role="columnheader">更新类型</span>
+              <span role="columnheader">来源状态</span>
+              <span role="columnheader"></span>
+            </div>
+            <button class="release-row" type="button" data-category="stable security" data-nav="article" role="row">
+              <span class="release-version" role="cell"><strong>M152</strong><small>152.0.7977.76</small></span>
+              <span role="cell">2026-09-01</span>
+              <span role="cell"><em class="tag tag-red">安全补丁</em></span>
+              <span role="cell"><em class="source-ok"><i data-lucide="circle-check"></i> 已核验</em></span>
+              <span role="cell"><i data-lucide="chevron-right"></i></span>
+            </button>
+            <button class="release-row" type="button" data-category="stable" data-nav="article" role="row">
+              <span class="release-version" role="cell"><strong>M152</strong><small>152.0.7977.65</small></span>
+              <span role="cell">2026-08-25</span>
+              <span role="cell"><em class="tag tag-blue">大版本</em></span>
+              <span role="cell"><em class="source-ok"><i data-lucide="circle-check"></i> 已核验</em></span>
+              <span role="cell"><i data-lucide="chevron-right"></i></span>
+            </button>
+            <button class="release-row" type="button" data-category="stable security" role="row">
+              <span class="release-version" role="cell"><strong>M151</strong><small>151.0.7924.84</small></span>
+              <span role="cell">2026-08-18</span>
+              <span role="cell"><em class="tag tag-red">安全补丁</em></span>
+              <span role="cell"><em class="source-ok"><i data-lucide="circle-check"></i> 已核验</em></span>
+              <span role="cell"><i data-lucide="chevron-right"></i></span>
+            </button>
+            <button class="release-row" type="button" data-category="stable" role="row">
+              <span class="release-version" role="cell"><strong>M151</strong><small>151.0.7924.52</small></span>
+              <span role="cell">2026-08-11</span>
+              <span role="cell"><em class="tag tag-blue">大版本</em></span>
+              <span role="cell"><em class="source-ok"><i data-lucide="circle-check"></i> 已核验</em></span>
+              <span role="cell"><i data-lucide="chevron-right"></i></span>
+            </button>
+          </div>
+        </section>
+
+        <section id="sources" class="sources-band">
+          <div class="page-shell sources-layout">
+            <div>
+              <span class="eyebrow">Evidence first</span>
+              <h2>一条更新，至少两份官方证据</h2>
+            </div>
+            <div class="source-list">
+              <span>VersionHistory API</span>
+              <span>Chrome Releases</span>
+              <span>Chrome for Developers</span>
+              <span>Enterprise Release Notes</span>
+              <span>Chrome What's New</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div id="article-view" class="view" data-screen-label="版本文章阅读页">
+        <div class="article-topbar">
+          <div class="page-shell article-topbar-inner">
+            <button class="back-button" type="button" data-nav="home">
+              <i data-lucide="arrow-left"></i>
+              返回更新列表
+            </button>
+            <div class="article-actions">
+              <button class="icon-button article-icon" type="button" data-action="font" aria-label="调整字号" title="调整字号">
+                <i data-lucide="type"></i>
+              </button>
+              <button class="button button-secondary compact" type="button" data-action="copy-markdown">
+                <i data-lucide="copy"></i>
+                Markdown
+              </button>
+              <button class="button button-primary compact" type="button" data-action="export">
+                <i data-lucide="send"></i>
+                发布到其他平台
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="article-layout page-shell">
+          <aside class="article-toc" aria-label="文章目录">
+            <span>本文目录</span>
+            <a class="is-active" href="#article-summary">版本摘要</a>
+            <a href="#article-platform">平台版本</a>
+            <a href="#scroll-animations">重点功能</a>
+            <a href="#article-security">安全更新</a>
+            <a href="#article-upgrade">如何升级</a>
+            <a href="#article-sources">官方来源</a>
+          </aside>
+
+          <article class="release-article" id="article-content">
+            <header class="article-header">
+              <div class="article-badges">
+                <span class="tag tag-blue">Stable</span>
+                <span class="tag tag-neutral">M152</span>
+                <span class="tag tag-neutral">2026-08-25</span>
+              </div>
+              <h1>Chrome 152 更新与使用指南</h1>
+              <p class="article-deck">从普通用户、Web 开发者和企业管理员三个视角，理解这次更新真正改变了什么。</p>
+              <div class="article-byline">
+                <span>Release Radar Bot</span>
+                <span>最后核验：2026-09-03</span>
+                <span>阅读约 8 分钟</span>
+              </div>
+            </header>
+
+            <section id="article-summary" class="article-section">
+              <h2>版本摘要</h2>
+              <p>
+                Chrome 152 已进入桌面 Stable 渠道。随后发布的 152.0.7977.75/.76 补丁包含 26 项安全修复。普通用户应优先完成升级；开发者需要关注滚动触发动画、历史导航判断和声明式命令能力。
+              </p>
+              <div class="article-callout">
+                <i data-lucide="shield-check"></i>
+                <div>
+                  <strong>升级建议</strong>
+                  <p>桌面端建议在浏览器提示可重启后尽快完成更新，并重新检查当前完整版本号。</p>
+                </div>
+              </div>
+            </section>
+
+            <section id="article-platform" class="article-section">
+              <h2>平台版本</h2>
+              <div class="platform-table">
+                <div><strong>Windows</strong><span>152.0.7977.75 / .76</span><em>Stable</em></div>
+                <div><strong>macOS</strong><span>152.0.7977.75 / .76</span><em>Stable</em></div>
+                <div><strong>Linux</strong><span>152.0.7977.75</span><em>Stable</em></div>
+              </div>
+            </section>
+
+            <section id="scroll-animations" class="article-section">
+              <span class="article-section-kicker">Web Platform</span>
+              <h2>滚动触发动画</h2>
+              <p>
+                Chrome 152 增加滚动触发动画能力，让动画只在滚动时间线进入指定范围后启动。它适合用于进入视口后的内容呈现，而不必持续运行整条滚动动画。
+              </p>
+              <div class="article-code">
+                <div><span>CSS</span><button type="button" data-action="copy-code"><i data-lucide="copy"></i>复制</button></div>
+                <pre><code>.notice {
+  animation: reveal 450ms ease both;
+  animation-trigger: view();
+}
+
+@keyframes reveal {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}</code></pre>
+              </div>
+              <h3>使用建议</h3>
+              <ol>
+                <li>先保留无动画时的可读状态，避免内容依赖动画才可见。</li>
+                <li>通过特性检测决定是否启用增强效果。</li>
+                <li>为开启“减少动态效果”的用户关闭非必要动画。</li>
+              </ol>
+            </section>
+
+            <section class="article-section">
+              <span class="article-section-kicker">Navigation</span>
+              <h2>识别历史记录导航</h2>
+              <p>
+                `Request.isHistoryNavigation` 可以判断导航是否由浏览器前进或后退触发。服务端或 Service Worker 可据此采用不同缓存策略，但不应把它作为安全判断依据。
+              </p>
+            </section>
+
+            <section id="article-security" class="article-section">
+              <span class="article-section-kicker danger">Security</span>
+              <h2>安全更新</h2>
+              <p>9 月 1 日的桌面稳定版补丁包含 26 项安全修复。部分漏洞细节会在多数用户完成更新后再公开。</p>
+              <div class="security-grid">
+                <div><span>修复数量</span><strong>26</strong></div>
+                <div><span>在野利用</span><strong>官方未披露</strong></div>
+                <div><span>建议级别</span><strong>尽快更新</strong></div>
+              </div>
+            </section>
+
+            <section id="article-upgrade" class="article-section">
+              <h2>如何检查并升级 Chrome</h2>
+              <ol>
+                <li>打开 Chrome 右上角菜单。</li>
+                <li>进入“帮助” → “关于 Google Chrome”。</li>
+                <li>等待更新下载完成，然后选择“重新启动”。</li>
+                <li>重新进入版本页面，确认完整版本号。</li>
+              </ol>
+            </section>
+
+            <section id="article-sources" class="article-section source-section">
+              <h2>官方来源</h2>
+              <a href="#"><span>01</span><strong>Chrome Releases · Stable Channel Update</strong><i data-lucide="external-link"></i></a>
+              <a href="#"><span>02</span><strong>Chrome for Developers · Chrome 152 Release Notes</strong><i data-lucide="external-link"></i></a>
+              <a href="#"><span>03</span><strong>VersionHistory API · Stable Versions</strong><i data-lucide="external-link"></i></a>
+            </section>
+          </article>
+
+          <aside class="article-meta" aria-label="版本元数据">
+            <div class="meta-block">
+              <span>证据状态</span>
+              <strong class="verified"><i data-lucide="badge-check"></i> 已核验</strong>
+            </div>
+            <dl>
+              <div><dt>Milestone</dt><dd>152</dd></div>
+              <div><dt>Channel</dt><dd>Stable</dd></div>
+              <div><dt>Sources</dt><dd>5</dd></div>
+              <div><dt>Revision</dt><dd>3</dd></div>
+            </dl>
+            <div class="meta-block source-hash">
+              <span>内容指纹</span>
+              <code>3b42a8…91cf</code>
+            </div>
+            <button class="meta-link" type="button" data-action="details">
+              <i data-lucide="git-commit-horizontal"></i>
+              查看生成记录
+            </button>
+          </aside>
+        </div>
+      </div>
+
+      <div id="download-view" class="view" data-screen-label="Chrome 下载页">
+        <section class="download-hero">
+          <div class="page-shell download-hero-grid">
+            <div class="download-hero-copy">
+              <button class="back-button download-back" type="button" data-nav="home">
+                <i data-lucide="arrow-left"></i>
+                返回最新更新
+              </button>
+              <span class="eyebrow">Verified download routes</span>
+              <h1>选择适合你的<br />Chrome 下载方式</h1>
+              <p>
+                默认优先使用 Google 官方渠道。国内入口和镜像会单独标注来源、适用平台与校验状态，不把第三方安装包描述成官方版本。
+              </p>
+              <div class="download-trust-row">
+                <span><i data-lucide="shield-check"></i> 官方渠道优先</span>
+                <span><i data-lucide="refresh-cw"></i> <span id="download-checked-at">正在读取来源配置</span></span>
+                <span><i data-lucide="fingerprint"></i> 镜像记录内容指纹</span>
+              </div>
+            </div>
+            <div class="download-brand-visual" aria-hidden="true">
+              <div class="download-browser-frame">
+                <div class="download-browser-bar"><span></span><span></span><span></span></div>
+                <img src="https://www.google.com/chrome/static/images/chrome-logo-m100.svg" alt="" />
+                <div class="download-progress"><span></span></div>
+                <strong>Chrome Stable</strong>
+              </div>
+              <span class="download-visual-label">Verified route</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="download-selector page-shell" aria-labelledby="download-title">
+          <div class="download-heading">
+            <div>
+              <span class="eyebrow">Download center</span>
+              <h2 id="download-title">Chrome 安装包</h2>
+            </div>
+            <div class="platform-switch" role="tablist" aria-label="选择操作系统">
+              <button class="platform-button is-active" type="button" role="tab" data-platform="windows">
+                <i data-lucide="monitor"></i>
+                Windows
+              </button>
+              <button class="platform-button" type="button" role="tab" data-platform="macos">
+                <i data-lucide="laptop"></i>
+                macOS
+              </button>
+              <button class="platform-button" type="button" role="tab" data-platform="linux">
+                <i data-lucide="terminal"></i>
+                Linux
+              </button>
+            </div>
+          </div>
+
+          <div id="download-panels" class="download-panels" aria-live="polite">
+            <div class="download-loading">
+              <i data-lucide="loader-circle"></i>
+              <span>正在读取下载源配置</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="download-safety">
+          <div class="page-shell safety-grid">
+            <div>
+              <span class="eyebrow">Before installing</span>
+              <h2>安装前检查</h2>
+            </div>
+            <ol>
+              <li><span>01</span><p><strong>优先确认来源</strong>安装页、最终下载域名和数字签名应保持一致。</p></li>
+              <li><span>02</span><p><strong>核对完整版本</strong>下载记录应包含平台、架构、版本号和抓取时间。</p></li>
+              <li><span>03</span><p><strong>镜像不是官方背书</strong>第三方镜像只解决网络可达性，不改变软件来源责任。</p></li>
+            </ol>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="page-shell footer-inner">
+        <div>
+          <strong>Release Radar for Chrome</strong>
+          <span>社区维护的 Chrome 更新追踪与阅读项目，不隶属于 Google。</span>
+        </div>
+        <div>
+          <a href="#">GitHub</a>
+          <a href="#">RSS</a>
+          <a href="#">JSON Feed</a>
+          <button class="footer-link" type="button" data-nav="download">下载 Chrome</button>
+          <a href="#">License</a>
+        </div>
+      </div>
+    </footer>
+
+    <div id="search-dialog" class="dialog-backdrop" aria-hidden="true">
+      <section class="search-dialog" role="dialog" aria-modal="true" aria-labelledby="search-title">
+        <div class="search-input-wrap">
+          <i data-lucide="search"></i>
+          <input id="search-input" type="search" placeholder="搜索版本、功能或 CVE" autocomplete="off" />
+          <button class="icon-button" type="button" data-action="close-search" aria-label="关闭搜索"><i data-lucide="x"></i></button>
+        </div>
+        <div class="search-results">
+          <span id="search-title">快速跳转</span>
+          <button type="button" data-nav="article" data-search-item="chrome 152 stable 安全补丁">
+            <strong>Chrome 152 更新与使用指南</strong><small>M152 · Stable · 2026-08-25</small>
+          </button>
+          <button type="button" data-nav="article" data-anchor="scroll-animations" data-search-item="滚动触发动画 css scroll animation">
+            <strong>滚动触发动画</strong><small>Web Platform · Chrome 152</small>
+          </button>
+          <button type="button" data-search-item="chrome 153 stable 预计发布">
+            <strong>Chrome 153 发布计划</strong><small>预计 2026-09-08</small>
+          </button>
+          <button type="button" data-nav="download" data-search-item="下载 chrome 官方 国内镜像 windows macos linux">
+            <strong>下载 Chrome</strong><small>官方渠道 · 中国入口 · Linux 镜像</small>
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <div id="export-dialog" class="dialog-backdrop" aria-hidden="true">
+      <section class="export-dialog" role="dialog" aria-modal="true" aria-labelledby="export-title">
+        <header>
+          <div>
+            <span>Publish toolkit</span>
+            <h2 id="export-title">复制与发布</h2>
+          </div>
+          <button class="icon-button" type="button" data-action="close-export" aria-label="关闭"><i data-lucide="x"></i></button>
+        </header>
+        <div class="export-layout">
+          <div class="export-options">
+            <button class="export-option is-active" type="button" data-export-mode="wechat">
+              <i data-lucide="message-circle"></i>
+              <span><strong>微信公众号 HTML</strong><small>内联样式，可直接粘贴到编辑器</small></span>
+              <i data-lucide="check"></i>
+            </button>
+            <button class="export-option" type="button" data-export-mode="markdown">
+              <i data-lucide="file-text"></i>
+              <span><strong>原始 Markdown</strong><small>保留 Frontmatter、代码和来源链接</small></span>
+              <i data-lucide="check"></i>
+            </button>
+            <button class="export-option" type="button" data-export-mode="html">
+              <i data-lucide="code-xml"></i>
+              <span><strong>通用 HTML</strong><small>适合博客和其他内容平台</small></span>
+              <i data-lucide="check"></i>
+            </button>
+            <div class="export-note">
+              <i data-lucide="image"></i>
+              <p>正文图片将使用独立 GitHub 资源仓库中的不可变地址，不依赖当前站点域名。</p>
+            </div>
+          </div>
+          <div class="wechat-preview">
+            <div class="preview-toolbar">
+              <span>微信公众号预览</span>
+              <span>375 px</span>
+            </div>
+            <div class="phone-preview">
+              <span class="preview-kicker">Chrome 更新</span>
+              <h3>Chrome 152 更新与使用指南</h3>
+              <p class="preview-meta">2026-09-03 · Release Radar</p>
+              <p>Chrome 152 已进入桌面 Stable 渠道，本次更新包含 Web 平台能力和安全修复。</p>
+              <blockquote>建议桌面端用户尽快完成更新并重新启动浏览器。</blockquote>
+              <h4>滚动触发动画</h4>
+              <p>动画可以在元素进入指定滚动范围后开始执行。</p>
+            </div>
+          </div>
+        </div>
+        <footer>
+          <span id="export-status">已选择：微信公众号 HTML</span>
+          <button class="button button-primary" type="button" data-action="copy-export">
+            <i data-lucide="clipboard-check"></i>
+            复制到剪贴板
+          </button>
+        </footer>
+      </section>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite">
+      <i data-lucide="circle-check"></i>
+      <span>已复制</span>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

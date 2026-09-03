@@ -1,0 +1,35 @@
+---
+import { ArrowUpRight } from "lucide-astro";
+import type { ReleaseEntry } from "../lib/releases";
+import { releasePath } from "../lib/releases";
+import { getUi, localeMeta, localizedPath, type Locale } from "../lib/i18n";
+
+interface Props {
+  release: ReleaseEntry;
+  compact?: boolean;
+  locale: Locale;
+}
+
+const { release, locale, compact = false } = Astro.props;
+const copy = getUi(locale).card;
+const date = new Intl.DateTimeFormat(localeMeta[locale].dateLocale, { dateStyle: "medium" }).format(release.data.updatedAt);
+const href = localizedPath(locale, releasePath(release, locale).replace(`/${locale}`, ""));
+---
+
+<article class:list={["release-card", { compact }]}>
+  <div class="release-card-version">
+    <span>M{release.data.milestone}</span>
+    <small>{release.data.channel}</small>
+  </div>
+  <div class="release-card-copy">
+    <div class="release-card-meta">
+      <span>{date}</span>
+      <span>{release.data.platforms.join(" · ")}</span>
+      {release.data.securityFixes !== undefined && <span>{release.data.securityFixes} {copy.securityFixes}</span>}
+    </div>
+    <h3><a href={href}>{release.data.title}</a></h3>
+    <p>{release.data.summary}</p>
+    <div class="tag-row">{release.data.tags.map((tag) => <span>{tag}</span>)}</div>
+  </div>
+  <a class="release-card-link" href={href} aria-label={`${copy.read} ${release.data.title}`}><ArrowUpRight size={18} /></a>
+</article>

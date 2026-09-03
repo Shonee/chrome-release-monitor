@@ -1,0 +1,47 @@
+{
+  "name": "chrome-release-monitor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Unofficial Chrome release tracking, publishing and download guide site.",
+  "scripts": {
+    "dev": "cross-env ASTRO_TELEMETRY_DISABLED=1 astro dev",
+    "generate:exports": "node scripts/generate-exports.mjs",
+    "build": "npm run generate:exports && cross-env ASTRO_TELEMETRY_DISABLED=1 astro check && cross-env ASTRO_TELEMETRY_DISABLED=1 astro build && pagefind --site dist --glob \"**/index.html\"",
+    "preview": "cross-env ASTRO_TELEMETRY_DISABLED=1 astro preview",
+    "check": "cross-env ASTRO_TELEMETRY_DISABLED=1 astro check && npm test",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "collect": "node scripts/collect-chrome-releases.mjs",
+    "sync:assets": "node scripts/sync-assets.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "@astrojs/rss": "4.0.19",
+    "@astrojs/sitemap": "3.7.4",
+    "astro": "7.2.10",
+    "cheerio": "1.2.0",
+    "gray-matter": "4.0.3",
+    "juice": "12.1.2",
+    "lucide-astro": "0.556.0",
+    "marked": "18.0.11",
+    "sanitize-html": "2.17.7",
+    "zod": "^4.1.5"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.10",
+    "@types/node": "26.4.1",
+    "@types/sanitize-html": "2.16.1",
+    "cross-env": "10.1.0",
+    "pagefind": "1.5.2",
+    "prettier": "3.9.6",
+    "prettier-plugin-astro": "0.14.1",
+    "typescript": "6.0.3",
+    "vitest": "4.1.11",
+    "wrangler": "4.128.0"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

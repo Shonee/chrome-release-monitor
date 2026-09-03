@@ -1,0 +1,80 @@
+---
+import { ArrowRight, CheckCircle2, Download, Radio, Rss, ShieldCheck } from "lucide-astro";
+import ReleaseCard from "../../components/ReleaseCard.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getSiteConfig, getSourcesConfig } from "../../lib/config";
+import { getLocaleStaticPaths, getUi, localeMeta, localizeSite, localizedPath, requireLocale } from "../../lib/i18n";
+import { getPublishedReleases, releasePath } from "../../lib/releases";
+import { withBase } from "../../lib/urls";
+
+export function getStaticPaths() { return getLocaleStaticPaths(); }
+
+const locale = requireLocale(Astro.params.lang);
+const copy = getUi(locale).home;
+const site = localizeSite(getSiteConfig(), locale);
+const sources = getSourcesConfig();
+const releases = await getPublishedReleases(locale);
+const latest = releases[0];
+const remaining = releases.slice(1, 5);
+const checkedAt = new Intl.DateTimeFormat(localeMeta[locale].dateLocale, { dateStyle: "medium", timeStyle: "short" }).format(new Date(sources.updatedAt));
+const releaseHref = (release: (typeof releases)[number]) => withBase(releasePath(release, locale));
+---
+
+<BaseLayout locale={locale}>
+  <section class="home-hero page-shell">
+    <div class="hero-kicker"><span></span>{latest?.data.channel || "Stable Channel"}<i></i>{copy.configUpdated} {checkedAt}</div>
+    <div class="home-hero-grid">
+      <div class="hero-copy">
+        <span class="eyebrow">{site.home.eyebrow}</span>
+        <h1>{site.home.headline}</h1>
+        <p>{site.home.summary}</p>
+        <div class="hero-actions">
+          {latest && <a class="button button-primary" href={releaseHref(latest)}>{copy.readLatest}<ArrowRight size={17} /></a>}
+          <a class="button button-secondary" href={localizedPath(locale, "/downloads/")}><Download size={16} />{site.home.downloadLabel}</a>
+        </div>
+      </div>
+      {latest && (
+        <aside class="release-summary">
+          <div class="summary-top"><span>{copy.latest}</span><strong>M{latest.data.milestone}</strong></div>
+          <h2>{latest.data.title}</h2>
+          <p>{latest.data.summary}</p>
+          <dl>
+            <div><dt>{copy.fullVersion}</dt><dd>{latest.data.version}</dd></div>
+            <div><dt>{copy.platforms}</dt><dd>{latest.data.platforms.join(" · ")}</dd></div>
+            <div><dt>{copy.status}</dt><dd>{latest.data.status}</dd></div>
+          </dl>
+        </aside>
+      )}
+    </div>
+  </section>
+
+  {latest && (
+    <section class="latest-section">
+      <div class="page-shell section-heading"><div><span class="eyebrow">{copy.changesEyebrow}</span><h2>{copy.changesTitle}</h2></div><a href={releaseHref(latest)}>{copy.fullArticle}<ArrowRight size={15} /></a></div>
+      <div class="page-shell highlight-grid">
+        {latest.data.highlights.map((highlight, index) => (
+          <article class="highlight-item"><span>0{index + 1}</span><div><small>{highlight.audience}</small><h3>{highlight.title}</h3><p>{highlight.description}</p></div></article>
+        ))}
+      </div>
+    </section>
+  )}
+
+  <section class="archive-section page-shell">
+    <div class="section-heading"><div><span class="eyebrow">{copy.archiveEyebrow}</span><h2>{copy.archiveTitle}</h2></div><a href={localizedPath(locale, "/archive/")}>{copy.allVersions}<ArrowRight size={15} /></a></div>
+    <div class="release-list">
+      {remaining.length ? remaining.map((release) => <ReleaseCard release={release} locale={locale} compact />) : latest && <ReleaseCard release={latest} locale={locale} compact />}
+    </div>
+  </section>
+
+  <section class="source-band">
+    <div class="page-shell source-band-grid">
+      <div><span class="eyebrow">{copy.sourcesEyebrow}</span><h2>{copy.sourcesTitle}</h2><p>{copy.sourcesDescription}</p></div>
+      <div class="source-signals">
+        <span><Radio size={17} />{sources.officialSources.length} {copy.officialSources}</span>
+        <span><ShieldCheck size={17} />{copy.thirdParty}</span>
+        <span><CheckCircle2 size={17} />{copy.buildValidation}</span>
+        <span><Rss size={17} />{copy.feeds}</span>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
