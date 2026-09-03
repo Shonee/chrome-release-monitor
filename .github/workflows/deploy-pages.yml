@@ -22,7 +22,7 @@ jobs:
       SITE_URL: ${{ vars.SITE_URL || format('https://{0}.github.io', github.repository_owner) }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
