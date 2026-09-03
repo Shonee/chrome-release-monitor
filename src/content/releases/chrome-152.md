@@ -1,17 +1,19 @@
 ---
 title: Chrome 152 更新与使用指南
 milestone: 152
-version: "152.0.7977.75/76"
+version: 152.0.7977.75/76
 channel: Stable
-publishedAt: 2026-09-03T12:00:00+08:00
-updatedAt: 2026-09-03T13:18:00+08:00
-stableReleasedAt: 2026-08-25T00:00:00-07:00
-versionReleasedAt: 2026-09-01T00:00:00-07:00
+publishedAt: 2026-09-03T04:00:00.000Z
+updatedAt: '2026-09-03T18:31:00.072Z'
+stableReleasedAt: 2026-08-25T07:00:00.000Z
+versionReleasedAt: '2026-09-01T20:50:55.230Z'
 status: published
-summary: Chrome 152 扩展 CSSPseudoElement 支持，引入 CPU Performance API，并通过 Connection Allowlists 限制页面网络连接。
+summary: >-
+  Chrome 152 扩展 CSSPseudoElement 支持，引入 CPU Performance API，并通过 Connection
+  Allowlists 限制页面网络连接。
 platforms:
   - Windows
-  - macOS
+  - Mac
   - Linux
 tags:
   - Chrome
@@ -34,20 +36,21 @@ highlights:
 securityFixes: 26
 sources:
   - label: New in Chrome 152
-    url: https://developer.chrome.com/blog/new-in-chrome-152/
+    url: 'https://developer.chrome.com/blog/new-in-chrome-152/'
   - label: Chrome 152 Release Notes
-    url: https://developer.chrome.com/release-notes/152/
+    url: 'https://developer.chrome.com/release-notes/152/'
   - label: Chrome 152 Stable Release
-    url: https://chromereleases.googleblog.com/2026/08/stable-channel-update-for-desktop_0256176589.html
+    url: >-
+      https://chromereleases.googleblog.com/2026/08/stable-channel-update-for-desktop_0256176589.html
   - label: Chrome 152 Current Version Update
-    url: https://chromereleases.googleblog.com/2026/09/stable-channel-update-for-desktop.html
+    url: >-
+      https://chromereleases.googleblog.com/2026/09/stable-channel-update-for-desktop.html
 images:
-  - src: https://developer.chrome.com/static/blog/new-in-chrome-152/image/thumb.png
+  - src: 'https://developer.chrome.com/static/blog/new-in-chrome-152/image/thumb.png'
     alt: Chrome 152 官方版本功能封面
-    officialSource: https://developer.chrome.com/blog/new-in-chrome-152/
+    officialSource: 'https://developer.chrome.com/blog/new-in-chrome-152/'
     mirror: true
 ---
-
 > Chrome 152 于 2026 年 8 月 25 日进入桌面稳定版渠道。当前记录的 `152.0.7977.75/76` 更新发布于 2026 年 9 月 1 日，并包含 26 项公告列出的安全修复。
 
 ## 本次更新概览
@@ -82,3 +85,7 @@ Connection Allowlists 允许站点通过 `Connection-Allowlist` HTTP 响应头�
 - [Chrome 152 Release Notes](https://developer.chrome.com/release-notes/152/)
 - [Chrome 152 Stable Release](https://chromereleases.googleblog.com/2026/08/stable-channel-update-for-desktop_0256176589.html)
 - [Chrome 152 Current Version Update](https://chromereleases.googleblog.com/2026/09/stable-channel-update-for-desktop.html)
+
+## 自动检测记录
+
+- 2026-09-03：Windows 152.0.7977.76；Mac 152.0.7977.76；Linux 152.0.7977.75
