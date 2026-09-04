@@ -2,7 +2,7 @@
   "name": "Release Radar",
   "productName": "Chrome",
   "titleSuffix": "Release Radar for Chrome",
-  "description": "社区维护的 Chrome 更新追踪、使用指南与下载入口，不隶属于 Google。",
+  "description": "自动维护的 Chrome 更新追踪、使用指南与下载入口，不隶属于 Google。",
   "language": "zh-CN",
   "locale": "zh-CN",
   "timezone": "Asia/Shanghai",
@@ -32,7 +32,7 @@
   "translations": {
     "en": {
       "titleSuffix": "Release Radar for Chrome",
-      "description": "A community-maintained Chrome release tracker, usage guide, and download directory. Not affiliated with Google.",
+      "description": "An automatically maintained Chrome release tracker, usage guide, and download directory. Not affiliated with Google.",
       "navigation": [
         { "label": "Latest", "href": "/" },
         { "label": "Archive", "href": "/archive/" },

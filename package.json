@@ -13,7 +13,6 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "collect": "node scripts/collect-chrome-releases.mjs",
-    "sync:assets": "node scripts/sync-assets.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
@@ -38,8 +37,7 @@
     "prettier": "3.9.6",
     "prettier-plugin-astro": "0.14.1",
     "typescript": "6.0.3",
-    "vitest": "4.1.11",
-    "wrangler": "4.128.0"
+    "vitest": "4.1.11"
   },
   "engines": {
     "node": ">=22.12.0"

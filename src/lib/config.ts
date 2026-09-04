@@ -143,11 +143,14 @@ const downloadSchema = z
 const sourcesSchema = z.object({
   updatedAt: z.iso.datetime({ offset: true }),
   collector: z.object({
-    apiType: z.enum(["chromiumdash", "versionhistory"]),
     releaseEndpoint: httpsUrl,
+    fallbackReleaseEndpoint: httpsUrl,
+    fallbackPlatformMap: z.record(z.string(), z.string().min(1)),
     platforms: z.array(z.string().min(1)).min(1),
     channel: z.string().min(1),
     requestTimeoutMs: z.number().int().min(1000).max(120000),
+    maxAttempts: z.number().int().min(1).max(5),
+    retryBaseDelayMs: z.number().int().min(100).max(10000),
     userAgent: z.string().min(1),
   }),
   officialSources: z
@@ -174,23 +177,8 @@ const sourcesSchema = z.object({
     .min(1),
 });
 
-const assetsSchema = z.object({
-  enabled: z.boolean(),
-  repository: z.string().regex(/^[\w.-]+\/[\w.-]+$/),
-  branch: z.string().min(1),
-  pathPrefix: z.string().min(1),
-  cdnBaseUrl: httpsUrl,
-  githubApiUrl: httpsUrl,
-  tokenEnv: z.string().regex(/^[A-Z][A-Z0-9_]+$/),
-  maxFileBytes: z.number().int().positive(),
-  allowedMimeTypes: z.array(z.string().startsWith("image/")).min(1),
-  allowedSourceHosts: z.array(z.string().min(1)).min(1),
-});
-
 const publishingSchema = z.object({
   exportsDirectory: z.string().min(1),
-  siteAuthor: z.string().min(1),
-  includeSourceLinks: z.boolean(),
   wechat: z.object({
     fontFamily: z.string().min(1),
     textColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
@@ -216,14 +204,12 @@ export type SiteConfig = z.infer<typeof siteSchema>;
 export type DownloadConfig = z.infer<typeof downloadSchema>;
 export type DownloadSource = z.infer<typeof downloadSourceSchema>;
 export type SourcesConfig = z.infer<typeof sourcesSchema>;
-export type AssetsConfig = z.infer<typeof assetsSchema>;
 export type PublishingConfig = z.infer<typeof publishingSchema>;
 
 export const getSiteConfig = () => readConfig("site.json", siteSchema);
 export const getDownloadConfig = () =>
   readConfig("downloads.json", downloadSchema);
 export const getSourcesConfig = () => readConfig("sources.json", sourcesSchema);
-export const getAssetsConfig = () => readConfig("assets.json", assetsSchema);
 export const getPublishingConfig = () =>
   readConfig("publishing.json", publishingSchema);
 

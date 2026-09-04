@@ -33,7 +33,7 @@ Why Astro fits this project:
 
 - Markdown and MDX remain the source of truth.
 - Content Collections can validate release metadata with a schema.
-- The same static `dist/` output can be deployed to GitHub Pages and Cloudflare Pages.
+- The static `dist/` output is deployed through GitHub Pages.
 - Custom release timelines, source-health UI, RSS, JSON Feed and export tools are easier to build than inside a documentation-first theme.
 - Client-side JavaScript can be limited to search, filters, theme, and copy/export actions.
 
@@ -49,33 +49,13 @@ Suggested supporting tools:
 
 ## Deployment boundary
 
-Keep the site static. Do not introduce Cloudflare-only runtime APIs into the core site. Both deployment targets should build with the same command and publish the same `dist/` directory.
+Keep the site static and deploy the generated `dist/` directory through GitHub Pages.
 
-GitHub Pages should use a GitHub Actions deployment workflow because the repository already needs scheduled generation workflows. Cloudflare Pages can use Git integration or receive the same prebuilt artifact in a separate deployment job.
+GitHub Pages uses a dedicated GitHub Actions deployment workflow after release generation succeeds.
 
-## Image storage recommendation
+## Image handling
 
-Do not place mirrored Chrome feature images in the main repository.
-
-Use a separate public repository, for example `chrome-release-radar-assets`, with this layout:
-
-```text
-releases/m152/<sha256-prefix>-vertical-tabs.webp
-releases/m152/<sha256-prefix>-feature-name.png
-metadata/m152/images.json
-```
-
-The collection workflow should:
-
-1. Download only images from an allowlist of official Google/Chromium domains.
-2. Validate MIME type, dimensions, byte size and content hash.
-3. Preserve the official source URL, retrieval date, license/usage note and article association in metadata.
-4. Upload new hashes to the asset repository through GitHub's Contents or Git Data API.
-5. Reference an immutable commit URL in generated Markdown.
-
-The asset repository must be public from the beginning if deployed pages need anonymous image access while the main repository is still private. A cross-repository workflow cannot rely on the main repository's default `GITHUB_TOKEN`; use a narrowly scoped GitHub App installation token or fine-grained token stored as an Actions secret.
-
-`raw.githubusercontent.com` commit URLs satisfy the GitHub-hosted requirement but do not provide a formal CDN SLA. jsDelivr can be an optional public-repository acceleration layer, not the only canonical URL. For higher traffic, the asset repository can also publish through GitHub Pages behind a dedicated asset domain.
+The current automated article flow does not download, mirror, or synchronize feature images. Manually maintained articles may reference official Google or Chromium image URLs directly when needed. Collection and deployment stay within this repository and require no extra credentials.
 
 ## Page structure
 
@@ -134,6 +114,6 @@ The export dialog demonstrates three outputs:
 ## Prototype limitations
 
 - Content is a representative Chrome 152 sample, not a generated production article.
-- Official images are loaded from Google URLs to demonstrate layout. The production workflow should mirror approved files to the separate asset repository.
+- Official images are loaded from Google URLs to demonstrate layout. Automated articles remain publishable without images.
 - GitHub, source and RSS links are placeholders.
 - The copy/export interaction uses browser clipboard APIs and fallback plain-text copying.

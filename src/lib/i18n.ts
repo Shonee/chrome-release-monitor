@@ -123,7 +123,7 @@ export const ui = {
       sourcesEyebrow: "Transparent sources",
       sourcesTitle: "每条结论都保留来源边界",
       sourcesDescription:
-        "版本、功能、安全修复和媒体资源分别记录来源，自动检测只生成草稿，不替代人工核验。",
+        "版本数据来自官方接口，自动文章只发布可验证的版本、平台和来源信息。",
       officialSources: "个官方来源",
       thirdParty: "第三方下载明确标注",
       buildValidation: "配置构建时校验",
@@ -219,18 +219,12 @@ export const ui = {
     },
     sources: {
       title: "数据来源",
-      description: "Chrome 更新检测、功能文章和图片资源的数据来源说明。",
+      description: "Chrome 更新检测与版本文章的数据来源说明。",
       eyebrow: "Evidence first",
       heading: "数据来源与核验边界",
       summary:
-        "自动化流程负责发现变化和保留证据，文章发布前仍需要对功能描述、使用方法和安全信息进行人工核验。",
+        "自动化流程从官方接口发现版本变化，并以保守模板发布可验证信息；安全详情仍以 Chrome 官方公告为准。",
       open: "打开",
-      assetEyebrow: "Asset repository",
-      assetTitle: "功能图片不进入主仓库",
-      repository: "资源仓库",
-      cdn: "CDN 地址",
-      mimeTypes: "允许类型",
-      fileLimit: "单文件上限",
     },
   },
   en: {
@@ -267,7 +261,7 @@ export const ui = {
       sourcesEyebrow: "Transparent sources",
       sourcesTitle: "Every conclusion keeps its evidence boundary",
       sourcesDescription:
-        "Versions, features, security fixes, and media assets retain separate sources. Automation creates drafts but never replaces editorial review.",
+        "Version data comes from official APIs, and automated articles publish only verifiable versions, platforms, and sources.",
       officialSources: "official sources",
       thirdParty: "Third-party downloads are clearly labeled",
       buildValidation: "Configuration validated at build time",
@@ -372,18 +366,12 @@ export const ui = {
     sources: {
       title: "Data sources",
       description:
-        "Sources used for Chrome version detection, release articles, and media assets.",
+        "Sources used for Chrome version detection and release articles.",
       eyebrow: "Evidence first",
       heading: "Sources and verification boundaries",
       summary:
-        "Automation discovers changes and preserves evidence. Feature descriptions, usage guidance, and security information still require editorial verification before publication.",
+        "Automation detects changes through official APIs and publishes a conservative factual summary. Chrome's official announcements remain authoritative for security details.",
       open: "Open",
-      assetEyebrow: "Asset repository",
-      assetTitle: "Feature images stay outside the main repository",
-      repository: "Asset repository",
-      cdn: "CDN URL",
-      mimeTypes: "Allowed types",
-      fileLimit: "Per-file limit",
     },
   },
 } as const;

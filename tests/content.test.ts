@@ -8,7 +8,9 @@ const releasesDirectory = path.join(process.cwd(), "src/content/releases");
 interface ReleaseFrontmatter {
   locale?: "zh-cn" | "en";
   milestone: number;
+  version: string;
   status: string;
+  generatedBy?: string;
   stableReleasedAt?: string;
   versionReleasedAt?: string;
   images?: Array<{ src: string; mirror?: boolean }>;
@@ -35,16 +37,16 @@ function readReleases() {
 }
 
 describe("release content", () => {
-  it("contains the 2026 Chrome 144 through 152 archive", () => {
-    for (const locale of ["zh-cn", "en"] as const) {
-      const milestones = readReleases()
+  it("keeps the Chinese and English release sets aligned as versions grow", () => {
+    const signatures = (locale: "zh-cn" | "en") =>
+      readReleases()
         .filter((release) => (release.locale || "zh-cn") === locale)
-        .map((release) => release.milestone)
-        .sort((left, right) => left - right);
-      expect(milestones, locale).toEqual([
-        144, 145, 146, 147, 148, 149, 150, 151, 152,
-      ]);
-    }
+        .map((release) => `${release.milestone}:${release.version}`)
+        .sort();
+
+    const chinese = signatures("zh-cn");
+    expect(chinese.length).toBeGreaterThan(0);
+    expect(signatures("en")).toEqual(chinese);
   });
 
   it("requires official timing and images for published releases", () => {
@@ -54,11 +56,15 @@ describe("release content", () => {
       expect(release.stableReleasedAt, release.filename).toBeTruthy();
       expect(release.versionReleasedAt, release.filename).toBeTruthy();
       const images = release.images || [];
-      expect(images.length, release.filename).toBeGreaterThan(0);
-      expect(images[0]?.src, release.filename).toMatch(
-        /^https:\/\/developer\.chrome\.com\//,
-      );
-      expect(images[0]?.mirror, release.filename).toBe(true);
+      if (images.length > 0) {
+        expect(images[0]?.src, release.filename).toMatch(
+          /^https:\/\/developer\.chrome\.com\//,
+        );
+      } else {
+        expect(release.generatedBy, release.filename).toBe(
+          "chrome-release-monitor",
+        );
+      }
     }
   });
 });

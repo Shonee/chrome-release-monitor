@@ -2,139 +2,195 @@
 
 项目版本：0.1.0
 
-部署日期：2026-09-03
+部署日期：2026-09-04
 
-## 通用构建
+## 部署方式
 
-```bash
-npm ci
-npm run build
-```
+项目生成完全静态的 `dist/` 目录，可部署到 GitHub Pages 或 Cloudflare Pages：
 
-构建产物为 `dist/`。GitHub Pages 与 Cloudflare Pages 必须使用同一构建命令和同一份静态产物，避免平台环境产生不同页面行为。
+- GitHub Pages：仓库已经包含自动部署工作流，适合直接使用当前发布链路。
+- Cloudflare Pages 控制台导入：由 Cloudflare 监听 GitHub 仓库并自动构建，配置最少。
+- GitHub Actions 部署 Cloudflare Pages：由 Actions 构建后直接上传，适合需要统一控制检查和部署步骤的场景。
+
+GitHub Pages 与 Cloudflare Pages 可以同时启用，但默认分支每次更新会产生两次部署。如果只需要一个站点，应只启用选定平台的部署触发方式。
 
 ## GitHub Pages
 
-仓库公开并准备开启 Pages 后：
+### 首次配置
 
-1. 进入仓库 Settings → Pages。
-2. 将 Source 设置为 GitHub Actions。
-3. 确认 Actions 允许执行 `.github/workflows/deploy-pages.yml`。
-4. 推送到默认分支或手动运行工作流。
+1. 进入仓库 **Settings > Pages**，将 Source 设置为 **GitHub Actions**。
+2. 进入 **Settings > Actions > General > Workflow permissions**，选择 **Read and write permissions**。
+3. 确认默认分支允许 `github-actions[bot]` 直接推送。若启用分支保护，需要为该自动化单独放行，否则监控任务会在推送阶段失败。
+4. 手动运行一次 **Deploy GitHub Pages**，确认 Pages 环境和地址可用。
+5. 手动运行一次 **Monitor Chrome releases**，确认采集权限与默认分支写入权限。
 
-工作流默认使用以下值：
+自动流程只使用仓库自带的 `GITHUB_TOKEN`，不需要个人访问令牌或额外 Secret。
+
+### 构建地址
+
+Pages 工作流默认使用：
 
 ```text
 BASE_PATH=/<repository-name>
 SITE_URL=https://<owner>.github.io
 ```
 
-使用自定义域名或用户主页仓库时，在 Repository Variables 中设置：
+自定义域名或用户主页仓库通过 Repository Variables 覆盖：
 
 ```text
 PAGES_BASE_PATH=/
 SITE_URL=https://updates.example.com
 ```
 
-## Cloudflare Pages Web 控制台导入（推荐）
-
-推荐直接使用 Cloudflare Pages 的 Git 集成。Cloudflare 通过 GitHub App 读取授权仓库并自动构建，私有仓库和公开仓库都可以选择，不需要在 GitHub Secrets 中保存 Cloudflare API Token。
-
-### 1. 导入 GitHub 仓库
-
-1. 登录 Cloudflare Dashboard，进入 **Workers & Pages**。
-2. 选择 **Create application**。
-3. 进入 **Pages**，选择 **Import an existing Git repository** 或 **Connect to Git**。
-4. 首次使用时按提示安装并授权 Cloudflare Pages GitHub App。
-5. 只授权需要部署的仓库，选择 `Shonee/chrome-release-monitor`。
-6. 选择 **Begin setup**。
-
-Cloudflare Pages 支持私有 GitHub 仓库。仓库后续公开不需要重新创建 Pages 项目。
-
-### 2. 配置构建
-
-在 **Set up builds and deployments** 中填写：
+### 自动发布顺序
 
 ```text
-Project name: chrome-release-monitor（可自定义）
-Production branch: master
-Framework preset: Astro
-Build command: npm run build
-Build output directory: dist
-Root directory: 留空
+定时或手动监控
+  -> 主源重试
+  -> 备用源回退
+  -> 无变化：成功结束
+  -> 有变化：生成中英文文章
+  -> npm run check
+  -> npm run build
+  -> 提交并推送默认分支
+  -> 调用 deploy-pages.yml
+  -> 按推送后的 commit SHA 再次构建并部署
 ```
 
-仓库根目录的 `.nvmrc` 固定为 Node.js 22；若 Cloudflare 构建环境未自动读取，可额外设置 `NODE_VERSION=22`。
+监控工作流显式调用独立部署工作流，是因为 `GITHUB_TOKEN` 产生的普通 push 事件不会再次启动另一个 workflow。人工推送到 `master` 或 `main` 仍会直接触发 Pages 工作流。
 
-在 **Environment variables** 中添加生产环境变量：
+### 故障与恢复
+
+- 上游短暂失败：每个数据源最多尝试 3 次并指数退避。
+- Chromium Dashboard 持续失败：自动切换 Version History API。
+- Release Notes 失败：文章省略功能标题，版本发布继续。
+- 三个平台任一无法从主备源取得数据：任务失败，不更新状态，不推送。
+- 测试或构建失败：任务失败，不提交。
+- 推送被拒绝：不 force push；处理分支保护或并发提交后重新运行。
+- 部署失败：数据提交已经保留，可单独重新运行 **Deploy GitHub Pages**。
+- 回滚：revert 对应的自动提交并推送默认分支，Pages 会部署回滚后的提交。
+
+## Cloudflare Pages
+
+Cloudflare Pages 通常部署在域名根路径，因此构建时应设置 `BASE_PATH=/`。`SITE_URL` 应填写最终的 `pages.dev` 地址或自定义域名，避免 Sitemap、RSS 和 JSON Feed 使用错误地址。
+
+### 方法一：控制台导入 GitHub 仓库
+
+该方法不需要新增 GitHub Actions 文件，也不需要在 GitHub 保存 Cloudflare API Token。
+
+1. 登录 Cloudflare Dashboard，进入 **Workers & Pages**，选择创建 Pages 项目并连接 Git。
+2. 授权 Cloudflare GitHub App 访问当前仓库，选择生产分支。当前仓库默认分支为 `master`。
+3. 使用以下构建配置：
+
+| 配置项                 | 值                 |
+| ---------------------- | ------------------ |
+| Framework preset       | Astro              |
+| Build command          | `npm run build`    |
+| Build output directory | `dist`             |
+| Root directory         | 留空（仓库根目录） |
+
+4. 在项目的构建环境变量中增加：
 
 ```text
+NODE_VERSION=22
 BASE_PATH=/
-SITE_URL=https://<project>.pages.dev
-ASTRO_TELEMETRY_DISABLED=1
+SITE_URL=https://<project-name>.pages.dev
 ```
 
-项目名决定默认的 `*.pages.dev` 域名。确认最终项目名后再填写 `SITE_URL`；如果第一次部署后域名与预期不同，在 **Settings → Environment variables** 修正并重新部署。
+5. 保存并执行首次部署。部署成功后检查生产地址，再按需在 **Custom domains** 中绑定自定义域名，并同步修改 `SITE_URL`。
 
-### 3. 保存并部署
+Cloudflare Git 集成会监听默认分支。Chrome 监控工作流推送新文章后，Cloudflare 会自动开始构建；无版本变化时没有新提交，也不会触发部署。
 
-1. 选择 **Save and Deploy**。
-2. 等待依赖安装、Astro 构建和静态资源上传完成。
-3. 进入项目概览，打开生产 URL 检查页面。
-4. 后续推送到 `master` 会自动部署生产环境；其他分支和 Pull Request 可生成预览部署。
+### 方法二：通过 GitHub Actions 部署
 
-### 4. 配置自定义域名
+该方法适用于 Cloudflare Pages Direct Upload 项目。先在 Cloudflare 创建 Pages 项目，再在仓库中配置：
 
-在 Pages 项目的 **Custom domains** 中添加正式域名。域名生效后，将 `SITE_URL` 改为正式域名并重新部署，确保 Sitemap、RSS 和 JSON Feed 使用正确的绝对地址。
+- Repository Secret `CLOUDFLARE_API_TOKEN`：使用仅授予目标账户 **Cloudflare Pages: Edit** 的 API Token。
+- Repository Secret `CLOUDFLARE_ACCOUNT_ID`：Cloudflare 账户 ID。
+- Repository Variable `CLOUDFLARE_PAGES_PROJECT`：Pages 项目名称。
+- Repository Variable `CLOUDFLARE_SITE_URL`：完整生产地址，例如 `https://chrome-release-monitor.pages.dev`。
 
-Git 集成项目后续不能直接切换为 Direct Upload 项目。若明确需要完全由外部 CI 上传，应在创建项目时选择对应模式。
+以下内容是配置示例，不会在本项目中新增对应 YAML 文件：
 
-## Cloudflare Pages GitHub Actions 部署（可选，不推荐）
+```yaml
+name: Deploy Cloudflare Pages
 
-仓库保留 `.github/workflows/deploy-cloudflare.yml` 作为高级备用方案。它需要额外维护 Cloudflare API Token 和账户 ID，不是本项目推荐的默认部署方式。
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
 
-只有无法使用 Cloudflare Git 集成、需要外部 CI 控制发布时，再配置：
+permissions:
+  contents: read
 
-Repository Secrets：
+concurrency:
+  group: cloudflare-pages
+  cancel-in-progress: true
 
-```text
-CLOUDFLARE_API_TOKEN
-CLOUDFLARE_ACCOUNT_ID
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate
+        run: npm run check
+
+      - name: Build
+        run: npm run build
+        env:
+          BASE_PATH: /
+          SITE_URL: ${{ vars.CLOUDFLARE_SITE_URL }}
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT }} --branch=${{ github.ref_name }}
 ```
 
-Repository Variables：
+如果默认分支不是 `master`，需要同步修改 `on.push.branches`。生产项目不要同时启用 Cloudflare Git 自动构建和上述 Direct Upload 工作流，否则同一次推送会触发重复部署。Cloudflare Pages 项目的 Git 集成模式与 Direct Upload 模式应在创建项目时确定；需要切换时建议新建项目并重新绑定域名。
 
-```text
-CLOUDFLARE_PAGES_PROJECT
-CLOUDFLARE_SITE_URL
-```
+### Cloudflare 故障排查
 
-API Token 只授予目标账户的 Pages Edit 权限。不要将全局 API Key 写入仓库或工作流。
-
-## 自动检测权限
-
-`.github/workflows/monitor-chrome.yml` 需要仓库允许 GitHub Actions 创建分支和 Pull Request。图片同步还需要单独的 `ASSET_REPO_TOKEN`，默认配置关闭时不会访问资源仓库。
+- 构建成功但静态资源 404：确认 `BASE_PATH=/`，然后重新部署。
+- Sitemap 或 Feed 域名错误：确认 `SITE_URL` 是完整的 HTTPS 生产地址。
+- Actions 返回鉴权错误：核对账户 ID、Token 所属账户和 **Cloudflare Pages: Edit** 权限，不要扩大 Token 权限。
+- 项目名称不存在：确认 `CLOUDFLARE_PAGES_PROJECT` 与 Dashboard 中的项目名称完全一致。
+- 自动采集有提交但 Cloudflare 未构建：控制台接入方式检查 GitHub App 仓库权限和生产分支；Actions 方式检查 workflow 的分支触发条件。
 
 ## 部署检查
 
-部署完成后检查：
+重点检查：
 
 ```text
 /
+/zh-cn/
+/en/
 /archive/
 /downloads/
 /sources/
-/releases/chrome-152/
 /rss.xml
 /feed.json
 /sitemap-index.xml
-/exports/chrome-152.wechat.html
 ```
 
-GitHub Pages 使用子路径时，重点检查导航、搜索索引、导出文件和 Logo 地址没有丢失仓库基础路径。
+GitHub Pages 使用仓库子路径时，还应检查导航、搜索索引、导出文件和 Logo 地址是否保留 `BASE_PATH`。Cloudflare Pages 使用根路径时，应确认这些地址不包含 GitHub 仓库名路径前缀。
 
 ## 参考资料
 
 - https://developers.cloudflare.com/pages/get-started/git-integration/
 - https://developers.cloudflare.com/pages/framework-guides/deploy-an-astro-site/
-- https://developers.cloudflare.com/pages/configuration/build-configuration/
+- https://developers.cloudflare.com/pages/how-to/use-direct-upload-with-continuous-integration/
+- https://github.com/cloudflare/wrangler-action

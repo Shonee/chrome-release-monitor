@@ -400,16 +400,14 @@ svg {
 }
 
 .release-summary dl,
-.download-primary-card dl,
-.asset-policy dl {
+.download-primary-card dl {
   display: grid;
   margin: 26px 0 0;
   border-top: 1px solid var(--line);
 }
 
 .release-summary dl > div,
-.download-primary-card dl > div,
-.asset-policy dl > div {
+.download-primary-card dl > div {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -445,7 +443,6 @@ dd {
 
 .section-heading h2,
 .source-band h2,
-.asset-policy h2,
 .download-heading h2,
 .download-safety h2 {
   margin: 10px 0 0;
@@ -707,23 +704,6 @@ dd {
   border: 1px solid var(--line);
   border-radius: 50%;
   color: var(--blue);
-}
-
-.asset-policy {
-  display: grid;
-  grid-template-columns: 0.8fr 1.2fr;
-  align-items: start;
-  padding-block: 60px 90px;
-  gap: 80px;
-}
-
-.asset-policy dl {
-  margin-top: 0;
-}
-
-.asset-policy dd {
-  max-width: 70%;
-  overflow-wrap: anywhere;
 }
 
 .download-hero {
@@ -1708,7 +1688,6 @@ dd {
 
   .home-hero-grid,
   .source-band-grid,
-  .asset-policy,
   .download-hero-grid,
   .download-panel.is-active,
   .safety-grid,
@@ -1824,7 +1803,6 @@ dd {
 
   .section-heading h2,
   .source-band h2,
-  .asset-policy h2,
   .download-heading h2,
   .download-safety h2 {
     font-size: 28px;
@@ -1865,11 +1843,6 @@ dd {
 
   .source-list article > a {
     grid-column: 2;
-  }
-
-  .asset-policy {
-    padding-block: 48px 64px;
-    gap: 30px;
   }
 
   .download-hero {

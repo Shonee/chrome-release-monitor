@@ -1,11 +1,18 @@
 {
   "updatedAt": "2026-09-03T12:00:00+08:00",
   "collector": {
-    "apiType": "chromiumdash",
     "releaseEndpoint": "https://chromiumdash.appspot.com/fetch_releases?channel=Stable&platform={platform}&num=5",
+    "fallbackReleaseEndpoint": "https://versionhistory.googleapis.com/v1/chrome/platforms/{platform}/channels/stable/versions?page_size=5",
+    "fallbackPlatformMap": {
+      "Windows": "win",
+      "Mac": "mac",
+      "Linux": "linux"
+    },
     "platforms": ["Windows", "Mac", "Linux"],
     "channel": "Stable",
     "requestTimeoutMs": 20000,
+    "maxAttempts": 3,
+    "retryBaseDelayMs": 1000,
     "userAgent": "chrome-release-monitor/0.1 (+https://github.com/Shonee/chrome-release-monitor)"
   },
   "officialSources": [

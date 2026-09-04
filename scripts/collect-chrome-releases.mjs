@@ -1,161 +1,235 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import matter from "gray-matter";
 import {
   buildReleaseMarkdown,
+  compareVersions,
+  createReleaseSlug,
+  extractReleaseNoteTitles,
+  fetchJsonWithRetry,
+  fetchTextWithRetry,
   formatCombinedVersion,
+  getChangedReleaseGroups,
   hasReleaseStateChanged,
   normalizeChromiumDashRelease,
   normalizeVersionHistoryRelease,
 } from "./lib/collector.mjs";
 
-const root = process.cwd();
-const dryRun = process.argv.includes("--dry-run");
-const config = JSON.parse(
-  await fs.readFile(path.join(root, "config/sources.json"), "utf8"),
-);
-const statePath = path.join(root, "data/release-state.json");
-const state = JSON.parse(await fs.readFile(statePath, "utf8"));
-
-function compareVersions(left, right) {
-  const a = left.split(".").map(Number);
-  const b = right.split(".").map(Number);
-  for (let index = 0; index < Math.max(a.length, b.length); index += 1) {
-    const difference = (a[index] || 0) - (b[index] || 0);
-    if (difference !== 0) return difference;
-  }
-  return 0;
-}
-
-async function fetchJson(url) {
-  const response = await fetch(url, {
-    headers: {
-      Accept: "application/json",
-      "User-Agent": config.collector.userAgent,
-    },
-    signal: AbortSignal.timeout(config.collector.requestTimeoutMs),
-  });
-  if (!response.ok)
-    throw new Error(`${response.status} ${response.statusText} from ${url}`);
-  return response.json();
-}
-
-async function fetchLatestForPlatform(platform) {
-  const url = config.collector.releaseEndpoint.replace(
-    "{platform}",
-    encodeURIComponent(platform),
+export async function runCollector(options = {}) {
+  const {
+    dryRun = process.argv.includes("--dry-run"),
+    fetchImpl = fetch,
+    logger = console,
+    now = () => new Date(),
+    root = process.cwd(),
+  } = options;
+  const config = JSON.parse(
+    await fs.readFile(path.join(root, "config/sources.json"), "utf8"),
   );
-  const payload = await fetchJson(url);
+  const statePath = path.join(root, "data/release-state.json");
+  const state = JSON.parse(await fs.readFile(statePath, "utf8"));
+  const releasesDirectory = path.join(root, "src/content/releases");
 
-  if (config.collector.apiType === "versionhistory") {
-    const item = payload.versions?.[0];
-    if (!item)
-      throw new Error(`No VersionHistory release returned for ${platform}`);
-    return normalizeVersionHistoryRelease(item, platform);
+  function requestOptions(label) {
+    return {
+      attempts: config.collector.maxAttempts,
+      baseDelayMs: config.collector.retryBaseDelayMs,
+      fetchImpl,
+      timeoutMs: config.collector.requestTimeoutMs,
+      headers: {
+        Accept: "application/json",
+        "User-Agent": config.collector.userAgent,
+      },
+      onRetry: ({ attempt, error, waitMs }) => {
+        logger.warn(
+          `${label} attempt ${attempt} failed: ${error.message}; retrying in ${waitMs}ms`,
+        );
+      },
+    };
   }
 
-  const item = Array.isArray(payload) ? payload[0] : payload.releases?.[0];
-  if (!item)
-    throw new Error(`No Chromium Dashboard release returned for ${platform}`);
-  return normalizeChromiumDashRelease(item, platform);
-}
+  function latestRelease(items, normalize, platform) {
+    const normalized = items.map((item) => normalize(item, platform));
+    return normalized.sort((left, right) =>
+      compareVersions(right.version, left.version),
+    )[0];
+  }
 
-function addDetectionRecord(content, detectedAt, releases) {
-  const record = `- ${detectedAt.slice(0, 10)}：${releases.map((item) => `${item.platform} ${item.version}`).join("；")}`;
-  if (content.includes(record)) return content;
-  if (content.includes("## 自动检测记录"))
-    return `${content.trim()}\n${record}\n`;
-  return `${content.trim()}\n\n## 自动检测记录\n\n${record}\n`;
-}
+  async function fetchPrimaryRelease(platform) {
+    const url = config.collector.releaseEndpoint.replace(
+      "{platform}",
+      encodeURIComponent(platform),
+    );
+    const payload = await fetchJsonWithRetry(
+      url,
+      requestOptions(`Primary release source for ${platform}`),
+    );
+    const items = Array.isArray(payload) ? payload : payload.releases || [];
+    if (!items.length) {
+      throw new Error(`No Chromium Dashboard release returned for ${platform}`);
+    }
+    return latestRelease(items, normalizeChromiumDashRelease, platform);
+  }
 
-async function writeOrUpdateArticle(release, releases, detectedAt) {
-  const articlePath = path.join(
-    root,
-    "src/content/releases",
-    `chrome-${release.milestone}.md`,
-  );
-  try {
-    const raw = await fs.readFile(articlePath, "utf8");
-    const parsed = matter(raw);
-    parsed.data.version = release.version;
-    parsed.data.updatedAt = detectedAt;
-    parsed.data.versionReleasedAt = release.publishedAt || detectedAt;
-    parsed.data.stableReleasedAt ||= release.publishedAt || detectedAt;
-    parsed.data.platforms = releases.map((item) => item.platform);
-    parsed.content = addDetectionRecord(parsed.content, detectedAt, releases);
-    if (!dryRun)
-      await fs.writeFile(
-        articlePath,
-        matter.stringify(parsed.content, parsed.data),
-        "utf8",
+  async function fetchFallbackRelease(platform) {
+    const platformValue = config.collector.fallbackPlatformMap[platform];
+    if (!platformValue) {
+      throw new Error(
+        `No fallback platform mapping configured for ${platform}`,
       );
-    return { articlePath, created: false, changed: true };
-  } catch (error) {
-    if (error.code !== "ENOENT") throw error;
-    const markdown = buildReleaseMarkdown({
-      ...release,
-      articleCreatedAt: detectedAt,
-      stableReleasedAt: release.publishedAt || detectedAt,
-      versionReleasedAt: release.publishedAt || detectedAt,
-      platforms: releases.map((item) => item.platform),
-    });
-    if (!dryRun) await fs.writeFile(articlePath, markdown, "utf8");
-    return { articlePath, created: true, changed: true };
+    }
+    const url = config.collector.fallbackReleaseEndpoint.replace(
+      "{platform}",
+      encodeURIComponent(platformValue),
+    );
+    const payload = await fetchJsonWithRetry(
+      url,
+      requestOptions(`Fallback release source for ${platform}`),
+    );
+    const items = payload.versions || [];
+    if (!items.length) {
+      throw new Error(`No Version History release returned for ${platform}`);
+    }
+    return latestRelease(items, normalizeVersionHistoryRelease, platform);
   }
+
+  async function fetchLatestForPlatform(platform) {
+    try {
+      return await fetchPrimaryRelease(platform);
+    } catch (primaryError) {
+      logger.warn(
+        `Primary release source failed for ${platform}: ${primaryError.message}`,
+      );
+      return fetchFallbackRelease(platform);
+    }
+  }
+
+  async function fetchFeatureTitles(milestone) {
+    const source = config.officialSources.find(
+      (item) => item.id === "chrome-release-notes",
+    );
+    const url = source?.urlTemplate?.replace("{milestone}", String(milestone));
+    if (!url) return [];
+
+    try {
+      const html = await fetchTextWithRetry(url, {
+        ...requestOptions(`Release notes for Chrome ${milestone}`),
+        headers: {
+          Accept: "text/html",
+          "User-Agent": config.collector.userAgent,
+        },
+      });
+      return extractReleaseNoteTitles(html);
+    } catch (error) {
+      logger.warn(
+        `Release-note enrichment skipped for Chrome ${milestone}: ${error.message}`,
+      );
+      return [];
+    }
+  }
+
+  async function findEquivalentArticle(locale, milestone, version) {
+    const directory =
+      locale === "en" ? path.join(releasesDirectory, "en") : releasesDirectory;
+    const entries = await fs.readdir(directory, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isFile() || !/\.mdx?$/.test(entry.name)) continue;
+      const filePath = path.join(directory, entry.name);
+      const parsed = matter(await fs.readFile(filePath, "utf8"));
+      if (
+        parsed.data.milestone === milestone &&
+        String(parsed.data.version) === version
+      ) {
+        return {
+          path: filePath,
+          generated: parsed.data.generatedBy === "chrome-release-monitor",
+        };
+      }
+    }
+    return null;
+  }
+
+  async function createArticles(group, detectedAt) {
+    const version = formatCombinedVersion(group.releases);
+    const featureTitles = await fetchFeatureTitles(group.milestone);
+    const slug = createReleaseSlug(group.milestone, version);
+    const results = [];
+
+    for (const locale of ["zh-cn", "en"]) {
+      const existing = await findEquivalentArticle(
+        locale,
+        group.milestone,
+        version,
+      );
+      const articlePath =
+        existing?.path ||
+        path.join(releasesDirectory, locale === "en" ? "en" : "", `${slug}.md`);
+      if ((!existing || existing.generated) && !dryRun) {
+        const markdown = buildReleaseMarkdown(
+          { ...group, detectedAt, featureTitles },
+          locale,
+        );
+        await fs.writeFile(articlePath, markdown, "utf8");
+      }
+      results.push({
+        locale,
+        path: path.relative(root, articlePath),
+        created: !existing,
+        updated: Boolean(existing?.generated),
+      });
+    }
+
+    return results;
+  }
+
+  const releases = await Promise.all(
+    config.collector.platforms.map(fetchLatestForPlatform),
+  );
+  const latestMilestone = Math.max(
+    ...releases.map((release) => release.milestone),
+  );
+  const detectedAt = now().toISOString();
+  const nextState = {
+    lastCheckedAt: detectedAt,
+    latestMilestone,
+    latestByPlatform: Object.fromEntries(
+      releases.map((release) => [
+        release.platform,
+        { version: release.version, milestone: release.milestone },
+      ]),
+    ),
+  };
+  const changed = hasReleaseStateChanged(state, nextState);
+  const changedGroups = changed ? getChangedReleaseGroups(state, releases) : [];
+  const articles = [];
+
+  for (const group of changedGroups) {
+    articles.push(...(await createArticles(group, detectedAt)));
+  }
+
+  if (!dryRun && changed) {
+    await fs.writeFile(
+      statePath,
+      `${JSON.stringify(nextState, null, 2)}\n`,
+      "utf8",
+    );
+  }
+
+  const result = {
+    dryRun,
+    changed,
+    latestMilestone,
+    releases,
+    articles,
+  };
+  logger.log(JSON.stringify(result, null, 2));
+  return result;
 }
 
-const releases = await Promise.all(
-  config.collector.platforms.map(fetchLatestForPlatform),
-);
-const latestMilestone = Math.max(
-  ...releases.map((release) => release.milestone),
-);
-const matchingMilestone = releases.filter(
-  (release) => release.milestone === latestMilestone,
-);
-const representative = [...matchingMilestone].sort((left, right) =>
-  compareVersions(right.version, left.version),
-)[0];
-const displayRelease = {
-  ...representative,
-  version: formatCombinedVersion(matchingMilestone),
-};
-const detectedAt = new Date().toISOString();
-
-const nextState = {
-  lastCheckedAt: detectedAt,
-  latestMilestone,
-  latestByPlatform: Object.fromEntries(
-    releases.map((release) => [
-      release.platform,
-      { version: release.version, milestone: release.milestone },
-    ]),
-  ),
-};
-const versionChanged = hasReleaseStateChanged(state, nextState);
-const articleResult = versionChanged
-  ? await writeOrUpdateArticle(displayRelease, matchingMilestone, detectedAt)
-  : null;
-
-if (!dryRun && versionChanged)
-  await fs.writeFile(
-    statePath,
-    `${JSON.stringify(nextState, null, 2)}\n`,
-    "utf8",
-  );
-
-console.log(
-  JSON.stringify(
-    {
-      dryRun,
-      changed: versionChanged,
-      latestMilestone,
-      releases,
-      article: articleResult
-        ? path.relative(root, articleResult.articlePath)
-        : null,
-    },
-    null,
-    2,
-  ),
-);
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(process.argv[1]).href
+) {
+  await runCollector();
+}

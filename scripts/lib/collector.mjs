@@ -1,20 +1,84 @@
-import path from "node:path";
+import { load } from "cheerio";
+
+const retryableStatuses = new Set([408, 425, 429, 500, 502, 503, 504]);
+
+const delay = (milliseconds) =>
+  new Promise((resolve) => setTimeout(resolve, milliseconds));
 
 function normalizeTimestamp(value) {
-  if (!value) return new Date().toISOString();
+  if (!value) return null;
   const numeric = Number(value);
-  if (Number.isFinite(numeric)) {
-    return new Date(
-      numeric < 10_000_000_000 ? numeric * 1000 : numeric,
-    ).toISOString();
+  const date = Number.isFinite(numeric)
+    ? new Date(numeric < 10_000_000_000 ? numeric * 1000 : numeric)
+    : new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    throw new Error(`Invalid release timestamp: ${value}`);
   }
-  return new Date(value).toISOString();
+  return date.toISOString();
+}
+
+export function compareVersions(left, right) {
+  const a = left.split(".").map(Number);
+  const b = right.split(".").map(Number);
+  for (let index = 0; index < Math.max(a.length, b.length); index += 1) {
+    const difference = (a[index] || 0) - (b[index] || 0);
+    if (difference !== 0) return difference;
+  }
+  return 0;
+}
+
+async function fetchWithRetry(url, responseType, options = {}) {
+  const {
+    attempts = 3,
+    baseDelayMs = 750,
+    fetchImpl = fetch,
+    headers = {},
+    onRetry = () => {},
+    sleep = delay,
+    timeoutMs = 20_000,
+  } = options;
+  let lastError;
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      const response = await fetchImpl(url, {
+        headers,
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+      if (!response.ok) {
+        const error = new Error(
+          `${response.status} ${response.statusText} from ${url}`,
+        );
+        error.retryable = retryableStatuses.has(response.status);
+        throw error;
+      }
+      return responseType === "json"
+        ? await response.json()
+        : await response.text();
+    } catch (error) {
+      lastError = error;
+      if (error.retryable === false || attempt === attempts) throw error;
+      const waitMs = Math.min(baseDelayMs * 2 ** (attempt - 1), 10_000);
+      onRetry({ attempt, error, waitMs });
+      await sleep(waitMs);
+    }
+  }
+
+  throw lastError;
+}
+
+export function fetchJsonWithRetry(url, options) {
+  return fetchWithRetry(url, "json", options);
+}
+
+export function fetchTextWithRetry(url, options) {
+  return fetchWithRetry(url, "text", options);
 }
 
 export function normalizeChromiumDashRelease(payload, platform) {
   const version = String(payload.version || "");
   const milestone = Number(payload.milestone || version.split(".")[0]);
-  if (!version || !Number.isInteger(milestone)) {
+  if (!/^\d+(\.\d+)+$/.test(version) || !Number.isInteger(milestone)) {
     throw new Error(`Invalid Chromium Dashboard release for ${platform}`);
   }
   return {
@@ -31,7 +95,7 @@ export function normalizeVersionHistoryRelease(payload, platform) {
     payload.version || payload.name?.split("/").at(-1) || "",
   );
   const milestone = Number(version.split(".")[0]);
-  if (!version || !Number.isInteger(milestone)) {
+  if (!/^\d+(\.\d+)+$/.test(version) || !Number.isInteger(milestone)) {
     throw new Error(`Invalid VersionHistory release for ${platform}`);
   }
   return {
@@ -39,22 +103,14 @@ export function normalizeVersionHistoryRelease(payload, platform) {
     milestone,
     channel: "Stable",
     platform,
-    publishedAt: new Date().toISOString(),
+    publishedAt: null,
   };
 }
 
 export function formatCombinedVersion(releases) {
   const versions = [...new Set(releases.map((release) => release.version))]
     .filter(Boolean)
-    .sort((left, right) => {
-      const a = left.split(".").map(Number);
-      const b = right.split(".").map(Number);
-      for (let index = 0; index < Math.max(a.length, b.length); index += 1) {
-        const difference = (a[index] || 0) - (b[index] || 0);
-        if (difference !== 0) return difference;
-      }
-      return 0;
-    });
+    .sort(compareVersions);
 
   if (versions.length <= 1) return versions[0] || "";
   const segments = versions.map((version) => version.split("."));
@@ -92,97 +148,180 @@ export function hasReleaseStateChanged(previous, next) {
   );
 }
 
-export function buildReleaseMarkdown(release) {
-  const sourceUrl = `https://developer.chrome.com/release-notes/${release.milestone}/`;
-  const articleCreatedAt = release.articleCreatedAt || new Date().toISOString();
-  const stableReleasedAt = release.stableReleasedAt || release.publishedAt;
-  const versionReleasedAt = release.versionReleasedAt || release.publishedAt;
+export function getChangedReleaseGroups(previous, releases) {
+  const changedMilestones = new Set(
+    releases
+      .filter((release) => {
+        const oldRelease = previous?.latestByPlatform?.[release.platform];
+        return (
+          oldRelease?.version !== release.version ||
+          oldRelease?.milestone !== release.milestone
+        );
+      })
+      .map((release) => release.milestone),
+  );
+
+  return [...changedMilestones]
+    .sort((left, right) => right - left)
+    .map((milestone) => ({
+      milestone,
+      releases: releases.filter((release) => release.milestone === milestone),
+    }));
+}
+
+export function extractReleaseNoteTitles(html, limit = 8) {
+  const $ = load(html);
+  const ignored = new Set([
+    "overview",
+    "further reading",
+    "related resources",
+    "download google chrome",
+  ]);
+  const titles = [];
+
+  $("main h2, main h3").each((_, element) => {
+    const title = $(element).text().replace(/\s+/g, " ").trim();
+    if (
+      title.length >= 4 &&
+      title.length <= 160 &&
+      !ignored.has(title.toLowerCase()) &&
+      !titles.includes(title) &&
+      titles.length < limit
+    ) {
+      titles.push(title);
+    }
+  });
+
+  return titles;
+}
+
+export function createReleaseSlug(milestone, version) {
+  const versionSlug = version
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+  return `chrome-${milestone}-${versionSlug}`;
+}
+
+function platformLabel(platform) {
+  return platform === "Mac" ? "macOS" : platform;
+}
+
+function quoteYaml(value) {
+  return JSON.stringify(value);
+}
+
+export function buildReleaseMarkdown(releaseGroup, locale = "zh-cn") {
+  const { detectedAt, featureTitles = [], milestone, releases } = releaseGroup;
+  const version = formatCombinedVersion(releases);
+  const platforms = releases.map((release) => platformLabel(release.platform));
+  const releaseDates = releases
+    .map((release) => release.publishedAt)
+    .filter(Boolean)
+    .sort();
+  const stableReleasedAt = releaseDates[0] || detectedAt;
+  const versionReleasedAt = releaseDates.at(-1) || detectedAt;
+  const notesUrl = `https://developer.chrome.com/release-notes/${milestone}/`;
+  const blogUrl = "https://chromereleases.googleblog.com/";
+  const isEnglish = locale === "en";
+  const title = isEnglish
+    ? `Chrome ${milestone} Stable update: ${version}`
+    : `Chrome ${milestone} 稳定版更新：${version}`;
+  const summary = isEnglish
+    ? `Chrome ${milestone} Stable is available for ${platforms.join(", ")}. This article records the versions detected from official Chrome data sources.`
+    : `Chrome ${milestone} 稳定版已面向 ${platforms.join("、")} 更新，本文记录从 Chrome 官方数据源检测到的版本信息。`;
+  const sourceLabels = isEnglish
+    ? ["Chrome release notes", "Chrome Releases blog"]
+    : ["Chrome 版本说明", "Chrome Releases 官方博客"];
+  const rows = releases
+    .map((release) => {
+      const releaseDate =
+        release.publishedAt?.slice(0, 10) || detectedAt.slice(0, 10);
+      return `| ${platformLabel(release.platform)} | \`${release.version}\` | ${releaseDate} |`;
+    })
+    .join("\n");
+  const features = featureTitles.length
+    ? featureTitles.map((feature) => `- ${feature}`).join("\n")
+    : isEnglish
+      ? `The official milestone notes were temporarily unavailable during collection. See [Chrome ${milestone} release notes](${notesUrl}) for the feature list.`
+      : `采集时暂未取得该里程碑的功能标题，请查看 [Chrome ${milestone} 版本说明](${notesUrl}) 获取完整功能列表。`;
+
+  const body = isEnglish
+    ? `## Current Stable versions
+
+Detected at: ${detectedAt}
+
+| Platform | Version | Official release or detection date |
+| --- | --- | --- |
+${rows}
+
+## Official update entries
+
+${features}
+
+The milestone notes describe browser and Web Platform changes. Security-fix counts and CVE details remain authoritative only in the [Chrome Releases blog](${blogUrl}).
+
+## Update Chrome
+
+Open the Chrome menu, choose **Help > About Google Chrome**, wait for the update to finish, and restart the browser. Managed environments should validate critical applications and policies before broad rollout.
+
+## Sources
+
+- [Chrome ${milestone} release notes](${notesUrl})
+- [Chrome Releases blog](${blogUrl})`
+    : `## 当前稳定版
+
+检测时间：${detectedAt}
+
+| 平台 | 版本 | 官方发布时间或检测日期 |
+| --- | --- | --- |
+${rows}
+
+## 官方更新条目
+
+${features}
+
+里程碑说明用于确认浏览器与 Web 平台变化；安全修复数量和 CVE 详情以 [Chrome Releases 官方博客](${blogUrl}) 为准。
+
+## 更新 Chrome
+
+打开 Chrome 菜单，进入**帮助 > 关于 Google Chrome**，等待更新完成后重新启动。企业环境应先验证关键应用和策略，再逐步扩大升级范围。
+
+## 来源
+
+- [Chrome ${milestone} 版本说明](${notesUrl})
+- [Chrome Releases 官方博客](${blogUrl})`;
+
   return `---
-title: Chrome ${release.milestone} 更新与使用指南
-locale: zh-cn
-milestone: ${release.milestone}
-version: ${release.version}
-channel: ${release.channel}
-publishedAt: ${articleCreatedAt}
-updatedAt: ${articleCreatedAt}
+title: ${quoteYaml(title)}
+locale: ${locale}
+milestone: ${milestone}
+version: ${quoteYaml(version)}
+channel: Stable
+publishedAt: ${detectedAt}
+updatedAt: ${detectedAt}
 stableReleasedAt: ${stableReleasedAt}
 versionReleasedAt: ${versionReleasedAt}
-status: draft
-summary: Chrome ${release.milestone} 已进入桌面稳定版渠道，本文将持续整理用户功能、Web 平台变化、安全修复与使用方法。
+status: published
+generatedBy: chrome-release-monitor
+summary: ${quoteYaml(summary)}
 platforms:
-${release.platforms.map((platform) => `  - ${platform}`).join("\n")}
+${platforms.map((platform) => `  - ${platform}`).join("\n")}
 tags:
   - Chrome
   - Stable
-  - 浏览器更新
 audience:
   - user
   - developer
   - enterprise
 highlights: []
 sources:
-  - label: Chrome ${release.milestone} Release Notes
-    url: ${sourceUrl}
+  - label: ${quoteYaml(sourceLabels[0])}
+    url: ${notesUrl}
+  - label: ${quoteYaml(sourceLabels[1])}
+    url: ${blogUrl}
 ---
 
-> 本文由自动检测流程创建。正式发布前请根据官方发布说明补充功能细节、使用步骤和安全更新信息。
-
-## 本次更新概览
-
-Chrome ${release.milestone} 已检测到新的 Stable 版本：\`${release.version}\`。
-
-## 普通用户关注的变化
-
-待根据 Chrome 官方发布公告补充。
-
-## 开发者与 Web 平台更新
-
-待根据 Chrome Release Notes 与 Chrome Status 补充 API、兼容性和示例代码。
-
-## 企业管理员注意事项
-
-待补充策略变化、弃用计划和分阶段升级建议。
-
-## 如何更新 Chrome
-
-1. 打开 Chrome 右上角菜单。
-2. 进入“帮助” → “关于 Google Chrome”。
-3. 等待浏览器完成下载与安装。
-4. 重新启动浏览器并确认完整版本号。
-
-## 来源
-
-- [Chrome ${release.milestone} Release Notes](${sourceUrl})
-- [Chrome Releases](https://chromereleases.googleblog.com/)
+${body}
 `;
-}
-
-export function validateAssetSource(sourceUrl, allowedHosts) {
-  try {
-    const parsed = new URL(sourceUrl);
-    if (parsed.protocol !== "https:") return false;
-    return allowedHosts.some(
-      (host) =>
-        parsed.hostname === host || parsed.hostname.endsWith(`.${host}`),
-    );
-  } catch {
-    return false;
-  }
-}
-
-export function createAssetPath(
-  milestone,
-  hash,
-  mimeType,
-  prefix = "releases",
-) {
-  const extensionByMime = {
-    "image/png": ".png",
-    "image/jpeg": ".jpg",
-    "image/webp": ".webp",
-    "image/gif": ".gif",
-  };
-  const extension = extensionByMime[mimeType];
-  if (!extension) throw new Error(`Unsupported asset MIME type: ${mimeType}`);
-  return path.posix.join(prefix, `m${milestone}`, `${hash}${extension}`);
 }

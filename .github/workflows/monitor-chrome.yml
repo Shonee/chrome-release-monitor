@@ -3,11 +3,7 @@ name: Monitor Chrome releases
 on:
   workflow_dispatch:
   schedule:
-    - cron: "17 */6 * * *"
-
-permissions:
-  contents: write
-  pull-requests: write
+    - cron: "0 1 * * *"
 
 concurrency:
   group: chrome-release-monitor
@@ -16,43 +12,71 @@ concurrency:
 jobs:
   monitor:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      changed: ${{ steps.changes.outputs.changed }}
+      commit_sha: ${{ steps.publish.outputs.commit_sha }}
     env:
-      GH_TOKEN: ${{ github.token }}
-      ASSET_REPO_TOKEN: ${{ secrets.ASSET_REPO_TOKEN }}
+      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
     steps:
-      - uses: actions/checkout@v7
+      - name: Checkout default branch
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v7
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
-      - run: npm ci
-      - run: npm run collect
-      - run: npm run sync:assets
-      - run: npm run check
-      - run: npm run build
-      - name: Detect repository changes
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Collect Chrome releases
+        run: npm run collect
+
+      - name: Detect release changes
         id: changes
         run: |
           if git diff --quiet -- data/release-state.json src/content/releases; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Chrome release data is already current."
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
-      - name: Create or update release pull request
+
+      - name: Validate site before publishing
         if: steps.changes.outputs.changed == 'true'
-        env:
-          BRANCH_NAME: automation/chrome-release-update
         run: |
+          npm run check
+          npm run build
+
+      - name: Commit and push validated release
+        id: publish
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git switch -C "$BRANCH_NAME"
           git add data/release-state.json src/content/releases
-          git commit -m "content: update Chrome release records"
-          git push --force-with-lease origin "$BRANCH_NAME"
-          if gh pr view "$BRANCH_NAME" >/dev/null 2>&1; then
-            gh pr edit "$BRANCH_NAME" --title "content: update Chrome release records" --body "Automated Chrome Stable detection. Review generated drafts and source boundaries before publishing."
-          else
-            gh pr create --base "${{ github.event.repository.default_branch }}" --head "$BRANCH_NAME" --title "content: update Chrome release records" --body "Automated Chrome Stable detection. Review generated drafts and source boundaries before publishing."
-          fi
+          git diff --cached --quiet && {
+            echo "Collector reported changes but no release files were staged." >&2
+            exit 1
+          }
+          git commit -m "content: publish Chrome release update"
+          git push origin "HEAD:$DEFAULT_BRANCH"
+          echo "commit_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    needs: monitor
+    if: needs.monitor.outputs.changed == 'true'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/deploy-pages.yml
+    with:
+      ref: ${{ needs.monitor.outputs.commit_sha }}

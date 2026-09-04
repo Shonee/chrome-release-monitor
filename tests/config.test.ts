@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  getAssetsConfig,
   getDownloadConfig,
   getOrderedDownloadSources,
   getPublishingConfig,
@@ -14,8 +13,9 @@ describe("project configuration", () => {
   it("loads every supported configuration file", () => {
     expect(getSiteConfig().navigation.length).toBeGreaterThan(0);
     expect(getSourcesConfig().collector.platforms).toContain("Windows");
-    expect(getAssetsConfig().allowedSourceHosts).toContain(
-      "developer.chrome.com",
+    expect(getSourcesConfig().collector.maxAttempts).toBeGreaterThan(1);
+    expect(getSourcesConfig().collector.fallbackReleaseEndpoint).toContain(
+      "versionhistory.googleapis.com",
     );
     expect(getPublishingConfig().exportsDirectory).toBe("public/exports");
   });
