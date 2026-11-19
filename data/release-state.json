@@ -1,14 +1,14 @@
 {
-  "lastCheckedAt": "2026-11-18T08:18:30.278Z",
-  "latestMilestone": 158,
+  "lastCheckedAt": "2026-11-19T08:30:52.994Z",
+  "latestMilestone": 159,
   "latestByPlatform": {
     "Windows": {
-      "version": "158.0.8127.37",
-      "milestone": 158
+      "version": "159.0.8154.13",
+      "milestone": 159
     },
     "Mac": {
-      "version": "158.0.8127.37",
-      "milestone": 158
+      "version": "159.0.8154.13",
+      "milestone": 159
     },
     "Linux": {
       "version": "158.0.8127.36",
