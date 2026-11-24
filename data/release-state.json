@@ -1,5 +1,5 @@
 {
-  "lastCheckedAt": "2026-11-19T08:30:52.994Z",
+  "lastCheckedAt": "2026-11-24T10:44:27.462Z",
   "latestMilestone": 159,
   "latestByPlatform": {
     "Windows": {
@@ -11,7 +11,7 @@
       "milestone": 159
     },
     "Linux": {
-      "version": "158.0.8127.36",
+      "version": "158.0.8127.88",
       "milestone": 158
     }
   }
